@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 120">
+  <style>
+    .logo-text { 
+      font-family: 'Suisse Intl', 'Inter', system-ui, sans-serif; 
+      font-size: 72px; 
+      font-weight: 400; 
+      fill: #C4C4C4;
+      letter-spacing: 0.02em;
+    }
+  </style>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" class="logo-text">
+    noreste arq
+  </text>
+</svg>

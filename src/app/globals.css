@@ -1,134 +1,821 @@
 @import "tailwindcss";
 
 :root {
-  /* Colores principales */
-  --background: #FAFAFA;
-  --foreground: #0A0A0A;
-  
-  /* Paleta norestearq */
-  --carbon: #0A0A0A;
-  --bone: #FAFAFA;
-  --anthracite: #1A1A1A;
-  --terracotta: #8B7355;
-  --concrete: #4A4A4A;
-  --sand: #D4C5B5;
+  --background: #fff;
+  --foreground: #000;
+  --color-text: #C4C4C4;
+  --color-text-hover: #808080;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-carbon: var(--carbon);
-  --color-bone: var(--bone);
-  --color-anthracite: var(--anthracite);
-  --color-terracotta: var(--terracotta);
-  --color-concrete: var(--concrete);
-  --color-sand: var(--sand);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-text: var(--color-text);
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
-}
+/* ==========================================================================
+   BASE STYLES - Estilo tenue.uy exacto
+   ========================================================================== */
 
-/* Scroll suave global */
 html {
   scroll-behavior: smooth;
-  overscroll-behavior: auto; /* Rebote suave contenido */
+}
+
+/* Scrollbar con fondo transparente */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #C4C4C4 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C4C4C4;
+  border-radius: 0;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #808080;
 }
 
 body {
-  overscroll-behavior: auto;
+  background: #fff;
+  color: #C4C4C4;
+  font-family: 'Suisse Intl', 'Inter', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Selección de texto */
-::selection {
-  background-color: var(--carbon);
-  color: var(--bone);
+body .main {
+  font-size: clamp(16px, 0.278vw + 0.938rem, 19px);
 }
 
-/* Estilos tabla índice - como tenue.uy */
-.table-container {
-  width: 100%;
-}
-
-.project-row {
-  display: flex;
-  width: 100%;
-  padding: 0.5rem 0;
+a,
+a:hover {
+  color: inherit;
   text-decoration: none;
-  border: none;
+  transition: 0.3s all;
 }
 
-.project-row .project-title {
-  flex: 2;
-  font-size: 1.2rem;
-  color: #888;
-  transition: color 0.2s ease;
+/* ==========================================================================
+   CONTAINER - Bootstrap-like
+   ========================================================================== */
+
+.container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 1rem;
 }
 
-.project-row .project-status {
-  flex: 1;
-  font-size: 1.2rem;
-  color: #888;
-  text-align: center;
-  transition: color 0.2s ease;
+@media screen and (min-width: 1440px) {
+  .container {
+    padding: 0 2rem;
+  }
 }
 
-.project-row .project-year {
-  width: 50px;
-  font-size: 1.2rem;
-  color: #888;
-  text-align: right;
-  transition: color 0.2s ease;
+/* ==========================================================================
+   HEADER - Estilo tenue.uy exacto
+   ========================================================================== */
+
+.header {
+  display: flex;
+  align-items: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-height: 60px;
+  background: transparent;
+  transition: 0.3s all;
+  z-index: 999;
+  font-size: clamp(16px, 0.278vw + 0.938rem, 19px);
 }
 
-.project-row:hover .project-title,
-.project-row:hover .project-status,
-.project-row:hover .project-year {
-  color: var(--carbon);
+.header.active {
+  background: #fff;
 }
 
-/* Thumbnail - mantener proporción, alineado a la derecha */
-.thumbnail {
-  text-align: right;
+.header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.thumbnail img {
-  max-width: 100%;
-  height: auto;
+.header .logo {
+  display: block;
+  max-width: 170px;
+  padding: 0;
+  z-index: 22;
+  transition: all .35s cubic-bezier(.3,.86,.36,.95);
+  text-transform: lowercase;
+  color: #C4C4C4 !important;
+  text-decoration: none !important;
+}
+
+/* Nav Menu hamburguesa (móvil) */
+.header .nav-menu {
+  position: relative;
+  width: 28px;
+  cursor: pointer;
+  z-index: 21;
+  display: block;
+}
+
+.header .nav-menu .menu-line {
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin: 3px 0;
+  background: #000;
+  transition: 0.3s;
+}
+
+.header .nav-menu.active .menu-line:nth-child(1) {
+  transform: rotate(45deg);
+  width: 30px;
+  margin-top: 12px;
+}
+
+.header .nav-menu.active .menu-line:nth-child(3) {
+  transform: rotate(-45deg);
+  width: 30px;
+  margin-top: -14px;
+}
+
+.header .nav-menu.active .menu-line:nth-child(2) {
   opacity: 0;
-  transition: opacity 0.3s ease;
 }
 
-.thumbnail img.fade-in {
+/* Navigation móvil */
+.header .navigation {
+  display: none;
+}
+
+.header .navigation.active {
+  display: block;
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 100%;
+  padding: 20px;
+  background: #fff;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.header .navigation ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.header .navigation ul li a {
+  position: relative;
+  display: inline-block;
+  padding: 10px 0;
+  text-transform: lowercase;
+  color: #C4C4C4 !important;
+  text-decoration: none !important;
+}
+
+.header .navigation ul li a::after {
+  content: '';
+  display: block;
+  border-bottom: solid 1px #C4C4C4;
+  transform: scaleX(0);
+  height: 2px;
+  opacity: 1;
+  transform-origin: 100% 0%;
+  transition: transform 300ms ease-in-out;
+}
+
+.header .navigation ul li.current-menu-item a::after,
+.header .navigation ul li a:hover::after {
+  transform: scaleX(1);
+  transform-origin: 0% 100%;
+}
+
+/* Desktop Header */
+@media screen and (min-width: 992px) {
+  .header {
+    min-height: 78px;
+  }
+
+  .header .container {
+    flex-direction: row;
+    justify-content: center;
+    position: relative;
+  }
+
+  .header .logo {
+    min-width: 220px;
+    text-align: center;
+    position: absolute;
+    left: calc(50% - 110px);
+    top: 10px;
+  }
+
+  .header .nav-menu {
+    display: none;
+  }
+
+  .header .navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+  }
+
+  .header .navigation ul {
+    display: flex;
+    justify-content: space-between;
+    width: 35%;
+  }
+
+  .header .navigation ul.menu-left {
+    justify-content: flex-start;
+  }
+
+  .header .navigation ul.menu-right {
+    justify-content: flex-end;
+  }
+
+  .header .navigation ul li a {
+    display: block;
+    padding: 10px 0;
+  }
+}
+
+/* ==========================================================================
+   HOME PAGE - Header absolute, no fixed
+   ========================================================================== */
+
+/* En el home, el header debe ser absolute, no fixed */
+.header.header-home {
+  position: absolute !important;
+  background: transparent !important;
+}
+
+.header.header-home::before {
+  content: '';
+  width: 15%;
+  height: 90px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: linear-gradient(180deg, white, transparent);
+}
+
+/* ==========================================================================
+   HOME SCROLL CONTAINER - Como tenue
+   ========================================================================== */
+
+.home-scroll {
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+@media screen and (max-width: 576px) {
+  .home-scroll {
+    height: 100svh;
+  }
+}
+
+/* ==========================================================================
+   PRESENTATION (Logo inicial home)
+   ========================================================================== */
+
+.presentation {
+  height: 100dvh;
+  display: flex;
+  align-items: flex-end;
+  pointer-events: none;
+  padding-bottom: 45px;
+}
+
+.presentation-spacer {
+  height: 0;
+}
+
+.presentation .logo {
+  transition: all 0.3s ease;
+}
+
+.presentation .logo.scroll {
+  opacity: 0;
+}
+
+@media screen and (min-width: 992px) {
+  .presentation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .presentation-spacer {
+    height: 100dvh;
+  }
+}
+
+/* ==========================================================================
+   HOME FEED - Estilo tenue.uy exacto
+   ========================================================================== */
+
+.home__feed {
+  display: flex;
+  flex-flow: column;
+  pointer-events: none;
+}
+
+@media (max-width: 656px) {
+  .home__feed {
+    padding-top: 14px;
+  }
+}
+
+.home__feed__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 75vh;
+  padding: 3px 0;
+  box-sizing: border-box;
+  perspective: 800px;
+}
+
+.home__feed__item:first-child {
+  margin-top: 50px;
+}
+
+.home__feed__item:not(:first-child) {
+  margin-top: -20vh;
+}
+
+.home__feed__item__img {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  cursor: pointer;
+  pointer-events: auto;
+  will-change: transform;
+}
+
+.home__feed__item__img picture {
+  width: 100%;
+  height: 100%;
+}
+
+.home__feed__item__img img {
+  height: 100%;
+}
+
+/* Label del proyecto - alineado a la izquierda */
+.home__feed__item__label {
+  position: absolute;
+  left: 0;
+  height: 100%;
+}
+
+.home__feed__item__label p {
+  position: relative;
+  margin: 0;
+  margin-bottom: -10vh;
+  padding-top: 10px;
+  padding-bottom: 15px;
+  color: #C4C4C4 !important;
+}
+
+.home__feed__item:first-child .home__feed__item__label p {
+  margin-bottom: 14.4vh;
+}
+
+/* Mobile */
+@media screen and (max-width: 576px) {
+  .home__feed__item__label {
+    display: none;
+  }
+
+  .home__feed__item {
+    height: 36vh;
+    padding: 1.5px 0;
+  }
+
+  .home__feed__item:not(:first-child) {
+    margin-top: -4.5vh;
+  }
+
+  .title_current {
+    position: fixed;
+    bottom: 15px;
+    left: 20px;
+    opacity: 0;
+    color: #C4C4C4;
+  }
+
+  .title_current.scroll {
+    opacity: 1;
+  }
+}
+
+@media screen and (min-width: 577px) {
+  .title_current {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   SECTION CONTENT - margin-top para páginas con header fixed
+   Esto es CLAVE: tenue usa margin-top: 70px en .section.content
+   ========================================================================== */
+
+.section.content {
+  margin-top: 70px;
+}
+
+/* ==========================================================================
+   PAGE PROJECTS (Index)
+   ========================================================================== */
+
+.page.projects .feed-projects {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -0.5rem;
+}
+
+@media screen and (min-width: 992px) {
+  .page.projects .feed-projects {
+    min-height: calc(100vh - 170px);
+  }
+}
+
+/* Tabla como tenue */
+.page.projects .table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: clamp(16px, 0.278vw + 0.938rem, 19px);
+  --bs-table-color: #C4C4C4;
+}
+
+.page.projects .thead,
+.page.projects .tbody {
+  display: table-row-group;
+}
+
+.page.projects .tr {
+  display: table-row;
+  cursor: pointer;
+}
+
+.page.projects .th,
+.page.projects .td {
+  display: table-cell;
+  padding: 5px 0;
+  text-align: left;
+  color: #C4C4C4 !important;
+}
+
+/* Reducir espacio entre columnas - como tenue */
+.page.projects .td:first-child {
+  width: auto;
+  padding-right: 15px;
+}
+
+.page.projects .td:nth-child(2),
+.page.projects .td:nth-child(3) {
+  white-space: nowrap;
+}
+
+.page.projects .th {
+  font-weight: 500;
+}
+
+.page.projects .tbody a {
+  position: relative;
+  text-decoration: none !important;
+}
+
+.page.projects .table a:hover .td {
+  color: #808080 !important;
+}
+
+.page.projects .tbody .spacer {
+  padding: 0;
+}
+
+/* Thumbnail */
+.page.projects .thumbnail {
+  position: sticky;
+  top: 78px;
+}
+
+.page.projects .thumbnail img {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.page.projects .thumbnail img.fade-in {
   opacity: 1;
 }
 
-.thumbnail.is-vertical {
+.page.projects .thumbnail.is-vertical img {
+  max-height: calc(100vh - 170px);
+  object-fit: cover;
+}
+
+/* Grid columns */
+.page.projects .col-12 {
+  width: 100%;
+  padding: 0 0.5rem;
+}
+
+@media screen and (min-width: 768px) {
+  .page.projects .col-md-6 {
+    width: 50%;
+    flex: 0 0 50%;
+  }
+}
+
+/* ==========================================================================
+   PAGE CONTACT (Info)
+   ========================================================================== */
+
+.page.contact .image img {
+  width: 100%;
+  height: auto;
+}
+
+.page.contact .row {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin: 0 -0.5rem;
 }
 
-.thumbnail.is-vertical img {
-  width: auto;
-  max-height: 70vh;
+.page.contact .col-12 {
+  width: 100%;
+  padding: 0 0.5rem;
 }
 
-/* Masonry Grid */
-.masonry-grid {
+@media screen and (min-width: 768px) {
+  .page.contact .col-md-4 {
+    width: 33.333%;
+    flex: 0 0 33.333%;
+  }
+
+  .page.contact .col-md-5 {
+    width: 41.666%;
+    flex: 0 0 41.666%;
+  }
+
+  .page.contact .order-md-1 {
+    order: 1;
+  }
+
+  .page.contact .order-md-2 {
+    order: 2;
+  }
+}
+
+.page.contact h1,
+.page.contact .about .title h3,
+.page.contact .about .title p {
+  font-size: clamp(16px, 0.278vw + 0.938rem, 19px);
+  font-weight: 400;
+}
+
+.page.contact .content h1,
+.page.contact .content h3 {
+  color: #C4C4C4 !important;
+  margin: 0 0 10px 0;
+}
+
+.page.contact .data {
+  color: #C4C4C4;
+}
+
+.page.contact .data p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.page.contact .vias {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.page.contact .vias a {
+  text-decoration: underline !important;
+  color: #C4C4C4 !important;
+}
+
+.page.contact .vias a:hover {
+  color: #808080 !important;
+}
+
+.page.contact .content a.link:hover {
+  text-decoration: underline;
+}
+
+@media screen and (min-width: 992px) {
+  .page.contact .content article {
+    display: flex;
+    gap: 30px;
+  }
+}
+
+/* ==========================================================================
+   SINGLE PROJECT
+   ========================================================================== */
+
+.single.projects .content .title {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.single.projects .content .title h1 {
+  font-size: clamp(16px, 0.278vw + 0.938rem, 19px);
+  margin-bottom: 0;
+}
+
+/* Accordion */
+.single.projects .accordion button {
+  position: relative;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.single.projects .accordion button::after {
+  content: '+';
+  color: #C4C4C4;
+  line-height: 20px;
+  transition: 0.3s cubic-bezier(0.68, 0.17, 0.02, 0.86);
+}
+
+.single.projects .accordion button[aria-expanded="true"]::after {
+  content: '-';
+}
+
+/* Gallery */
+.single.projects .gallery .g-5 {
+  --bs-gutter-x: 4rem;
+  --bs-gutter-y: 4rem;
+}
+
+/* Nav Projects */
+.single.projects .nav-projects {
   display: flex;
-  margin-left: -1rem;
-  width: auto;
+  justify-content: space-between;
+  padding-bottom: 30px;
 }
 
-.masonry-grid-column {
-  padding-left: 1rem;
-  background-clip: padding-box;
+.single.projects .nav-projects a {
+  color: #C4C4C4;
 }
 
-.masonry-grid-column > div {
-  margin-bottom: 1rem;
+.single.projects .nav-projects a:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   MAIN & FOOTER
+   ========================================================================== */
+
+.main {
+  width: 100%;
+  min-height: 80vh;
+}
+
+.footer {
+  /* vacío como tenue */
+}
+
+/* ==========================================================================
+   UTILITIES - Como Bootstrap/tenue
+   ========================================================================== */
+
+.list-unstyled {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.pt-0 {
+  padding-top: 0 !important;
+}
+
+.pt-3 {
+  padding-top: 1rem !important;
+}
+
+.pt-5 {
+  padding-top: 3rem !important;
+}
+
+.pb-0 {
+  padding-bottom: 0 !important;
+}
+
+.mb-0 {
+  margin-bottom: 0 !important;
+}
+
+.mb-3 {
+  margin-bottom: 1rem !important;
+}
+
+.g-3 {
+  gap: 1rem;
+}
+
+.d-none {
+  display: none !important;
+}
+
+@media screen and (min-width: 768px) {
+  .d-md-block {
+    display: block !important;
+  }
+}
+
+.text-end {
+  text-align: right !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.section {
+  position: relative;
+  padding: 30px 0;
+}
+
+@media screen and (min-width: 992px) {
+  .section {
+    padding: 60px 0;
+  }
+}
+
+.clearfix::after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }

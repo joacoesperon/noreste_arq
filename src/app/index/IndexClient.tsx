@@ -19,7 +19,7 @@ export default function IndexClient({ projects }: Props) {
   const thumbnailContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const rows = document.querySelectorAll(".project-row");
+    const rows = document.querySelectorAll('.page.projects .tr');
     const thumbnail = thumbnailRef.current;
     const thumbnailContainer = thumbnailContainerRef.current;
 
@@ -62,33 +62,36 @@ export default function IndexClient({ projects }: Props) {
   }, []);
 
   return (
-    <div className="flex flex-wrap">
-      {/* Tabla proyectos - 50% */}
-      <div className="w-full md:w-1/2 md:pr-4">
-        <div className="table-container">
-          {projects.map((project) => (
-            <a
-              key={project.slug}
-              href={`/projects/${project.slug}`}
-              className="project-row"
-              data-image={project.image}
-            >
-              <span className="project-title">{project.title}</span>
-              <span className="project-status">{project.status}</span>
-              <span className="project-year">{project.year}</span>
-            </a>
-          ))}
+    <div className="row feed-projects">
+      <div className="col-12 col-md-6">
+        <div className="table">
+          <div className="tbody">
+            {projects.map((project) => (
+              <a
+                key={project.slug}
+                href={`/projects/${project.slug}`}
+                className="tr"
+                data-image={project.image}
+              >
+                <div className="td">{project.title}</div>
+                <div className="td">{project.status}</div>
+                <div className="td">{project.year}</div>
+              </a>
+            ))}
+            <div className="spacer"></div>
+            <div className="spacer"></div>
+          </div>
         </div>
       </div>
-
-      {/* Thumbnail preview - 50% */}
-      <div className="hidden md:block w-1/2 pl-4 text-right">
-        <div className="thumbnail sticky top-16" ref={thumbnailContainerRef}>
+      
+      <div className="col-12 col-md-6 d-none d-md-block text-end">
+        <div className="thumbnail" ref={thumbnailContainerRef}>
           <img
+            id="project-thumbnail"
             ref={thumbnailRef}
             src={projects[0]?.image}
             alt=""
-            className="inline-block"
+            className="img-fluid"
           />
         </div>
       </div>

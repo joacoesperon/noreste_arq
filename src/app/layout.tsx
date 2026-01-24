@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 
-const geist = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "norestearq",
-  description: "Estudio de arquitectura contemporánea. Minimalismo, elegancia y funcionalidad.",
+  title: "noreste arq - Estudio de arquitectura y diseño",
+  description: "Estudio de arquitectura y diseño con base en Punta del Este.",
 };
 
 export default function RootLayout({
@@ -19,8 +19,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className={`${geist.variable} font-sans antialiased`}>
+      <body className={inter.className}>
         {children}
+        <div id="pageloader" className="hide"></div>
       </body>
     </html>
   );

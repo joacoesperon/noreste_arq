@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { 
   getProjects, 
   getProjectBySlug, 
@@ -34,14 +35,17 @@ export default async function ProjectPage({ params }: Props) {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-bone">
-        <ProjectClient 
-          project={project} 
-          images={images}
-          prevProject={prev}
-          nextProject={next}
-        />
+      <main className="main clearfix wrapper">
+        <div className="single projects">
+          <ProjectClient 
+            project={project} 
+            images={images}
+            prevProject={prev}
+            nextProject={next}
+          />
+        </div>
       </main>
+      <Footer />
     </>
   );
 }

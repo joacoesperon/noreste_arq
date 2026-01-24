@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { getProjectsSortedByYear, getProjectCoverImage } from "@/lib/projects";
 import IndexClient from "./IndexClient";
 
@@ -17,13 +18,16 @@ export default function IndexPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-bone">
-        <section className="pt-16 pb-0">
-          <div className="px-4">
-            <IndexClient projects={projectsForClient} />
-          </div>
-        </section>
+      <main className="main clearfix wrapper">
+        <div className="page projects">
+          <section className="section feed content pt-3 pb-0">
+            <div className="container">
+              <IndexClient projects={projectsForClient} />
+            </div>
+          </section>
+        </div>
       </main>
+      <Footer />
     </>
   );
 }

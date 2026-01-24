@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-export default function Header() {
+export default function HomeHeader() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -17,7 +17,7 @@ export default function Header() {
   };
 
   return (
-    <header className="header">
+    <header className="header header-home">
       <div className="container">
         {/* Logo centrado */}
         <a href="/" className="logo" data-title="NORESTE ARQ">

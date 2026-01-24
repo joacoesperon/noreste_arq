@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Project } from "@/lib/projects";
-import Masonry from "react-masonry-css";
 
 type ProjectImage = {
   src: string;
@@ -20,8 +19,9 @@ export default function ProjectClient({ project, images, prevProject, nextProjec
   const [showCredits, setShowCredits] = useState(false);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const loadedCount = useRef(0);
+  const galleryRef = useRef<HTMLDivElement>(null);
 
-  // Esperar a que las imágenes carguen para un mejor layout de masonry
+  // Esperar a que las imágenes carguen para masonry
   useEffect(() => {
     loadedCount.current = 0;
     setImagesLoaded(false);
@@ -31,120 +31,129 @@ export default function ProjectClient({ project, images, prevProject, nextProjec
     loadedCount.current += 1;
     if (loadedCount.current >= images.length) {
       setImagesLoaded(true);
+      // Inicializar Masonry después de que todas las imágenes carguen
+      if (galleryRef.current && typeof window !== 'undefined') {
+        import('masonry-layout').then((Masonry) => {
+          import('imagesloaded').then((imagesLoaded) => {
+            const container = galleryRef.current;
+            if (container) {
+              imagesLoaded.default(container, () => {
+                new Masonry.default(container, {
+                  percentPosition: true,
+                  itemSelector: '.portfolio-item',
+                });
+              });
+            }
+          });
+        });
+      }
     }
   };
 
-  // Breakpoints para Masonry
-  const breakpointColumns = {
-    default: 2,
-    768: 1
+  const toggleCredits = () => {
+    setShowCredits(!showCredits);
   };
 
   return (
     <>
-      {/* Info del proyecto - centrado como tenue */}
-      <section className="pt-16 px-6 md:px-12 pb-12 text-center">
-        {/* Título, M2, Año */}
-        <h1 className="text-2xl md:text-3xl text-carbon font-normal mb-4">
-          {project.title}, {project.m2}M<sup>2</sup>, {project.year}
-        </h1>
+      {/* Content - Info del proyecto */}
+      <section className="section content">
+        <div className="container">
+          <div className="title text-center">
+            <h1>{project.title}, {project.m2}M<sup>2</sup>, {project.year}</h1>
+            <p>{project.location}</p>
 
-        {/* Ubicación */}
-        <p className="text-base text-concrete mb-6">
-          {project.location}
-        </p>
+            {/* Acordeón para créditos */}
+            <div className="accordion" id="accordionCredits">
+              <div className="item">
+                <button
+                  type="button"
+                  className={showCredits ? 'active' : ''}
+                  onClick={toggleCredits}
+                  aria-expanded={showCredits}
+                  aria-controls="seeMore"
+                ></button>
 
-        {/* Botón + para expandir créditos */}
-        <button
-          onClick={() => setShowCredits(!showCredits)}
-          className="text-2xl text-concrete hover:text-carbon transition-colors cursor-pointer leading-none"
-          aria-expanded={showCredits}
-          aria-label={showCredits ? "Cerrar créditos" : "Ver créditos"}
-        >
-          {showCredits ? "−" : "+"}
-        </button>
-
-        {/* Créditos (expandible) */}
-        {showCredits && (
-          <div className="mt-6 pt-6 border-t border-concrete/20 max-w-md mx-auto">
-            <div className="space-y-2 text-base text-concrete">
-              <p><span className="text-carbon">Proyecto:</span> {project.credits.proyecto}</p>
-              <p><span className="text-carbon">Equipo:</span> {project.credits.equipo}</p>
-              <p><span className="text-carbon">Fotografías:</span> {project.credits.fotografias}</p>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* Galería Masonry */}
-      <section className="px-6 md:px-12 pb-12">
-        <Masonry
-          breakpointCols={breakpointColumns}
-          className="masonry-grid"
-          columnClassName="masonry-grid-column"
-        >
-          {images.map((img, index) => (
-            <div key={index} className="mb-4">
-              <img
-                src={img.src}
-                alt={`${project.title} - ${img.type} ${index + 1}`}
-                className={`w-full h-auto transition-opacity duration-300 ${imagesLoaded ? 'opacity-100' : 'opacity-0'}`}
-                loading="lazy"
-                onLoad={handleImageLoad}
-              />
-            </div>
-          ))}
-        </Masonry>
-      </section>
-
-      {/* Navegación prev/next */}
-      <section className="px-6 md:px-12 py-16 border-t border-concrete/20">
-        <div className="flex justify-between items-center">
-          {/* Proyecto anterior */}
-          <div className="text-left">
-            {prevProject ? (
-              <a
-                href={`/projects/${prevProject.slug}`}
-                className="group inline-block"
-              >
-                <span className="block text-sm text-concrete mb-1 group-hover:text-carbon transition-colors">
-                  {prevProject.title}
-                </span>
-                <span className="text-2xl text-carbon">
-                  ←
-                </span>
-              </a>
-            ) : (
-              <div className="opacity-30">
-                <span className="block text-sm text-concrete mb-1">—</span>
-                <span className="text-2xl text-carbon">←</span>
+                <div 
+                  id="seeMore" 
+                  className={`accordion-collapse ${showCredits ? 'show' : ''}`}
+                >
+                  <br />
+                  <p>Project:</p>
+                  <p>{project.credits.proyecto}</p>
+                  <br />
+                  <p>Team:</p>
+                  <p>{project.credits.equipo}</p>
+                  <br />
+                  <p>Photography:</p>
+                  <p>{project.credits.fotografias}</p>
+                </div>
               </div>
-            )}
-          </div>
-
-          {/* Proyecto siguiente */}
-          <div className="text-right">
-            {nextProject ? (
-              <a
-                href={`/projects/${nextProject.slug}`}
-                className="group inline-block"
-              >
-                <span className="block text-sm text-concrete mb-1 group-hover:text-carbon transition-colors">
-                  {nextProject.title}
-                </span>
-                <span className="text-2xl text-carbon">
-                  →
-                </span>
-              </a>
-            ) : (
-              <div className="opacity-30">
-                <span className="block text-sm text-concrete mb-1">—</span>
-                <span className="text-2xl text-carbon">→</span>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       </section>
+
+      {/* Gallery */}
+      <section className="section gallery">
+        <div className="container">
+          <div 
+            className="row g-2 g-md-5" 
+            ref={galleryRef}
+            data-masonry='{"percentPosition": true}'
+          >
+            {images.map((img, index) => (
+              <div key={index} className="col-12 col-md-6 portfolio-item">
+                <a href={img.src} data-fancybox="gallery" className="noloading">
+                  <img
+                    src={img.src}
+                    alt={`${project.title} - ${img.type} ${index + 1}`}
+                    className="img-fluid img-single-project"
+                    loading="lazy"
+                    onLoad={handleImageLoad}
+                    style={{ opacity: imagesLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
+                  />
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Nav Projects */}
+      <div className="nav-projects container">
+        <div className="prev">
+          {prevProject ? (
+            <a href={`/projects/${prevProject.slug}`}>
+              {prevProject.title}
+              <br />
+              &lt;
+            </a>
+          ) : (
+            <span style={{ opacity: 0.3 }}>
+              —
+              <br />
+              &lt;
+            </span>
+          )}
+        </div>
+
+        <div className="next text-end">
+          {nextProject ? (
+            <a href={`/projects/${nextProject.slug}`}>
+              {nextProject.title}
+              <br />
+              &gt;
+            </a>
+          ) : (
+            <span style={{ opacity: 0.3 }}>
+              —
+              <br />
+              &gt;
+            </span>
+          )}
+        </div>
+      </div>
     </>
   );
 }
