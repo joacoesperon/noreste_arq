@@ -1,0 +1,128 @@
+{
+  "projects": [
+    {
+      "slug": "casa-morena",
+      "title": "Casa Morena",
+      "m2": 180,
+      "status": "Construido",
+      "year": 2024,
+      "location": "La Barra, Maldonado, Uruguay",
+      "credits": {
+        "proyecto": "norestearq",
+        "equipo": "Nombre Arquitecto",
+        "fotografias": "Fotógrafo Nombre"
+      },
+      "exteriorImages": [
+        "01.jpg",
+        "02.jpg",
+        "03.jpg"
+      ],
+      "interiorImages": [
+        "01.jpg",
+        "02.jpg"
+      ]
+    },
+    {
+      "slug": "refugio-serrano",
+      "title": "Refugio Serrano",
+      "m2": 90,
+      "status": "Construido",
+      "year": 2023,
+      "location": "José Ignacio, Maldonado, Uruguay",
+      "credits": {
+        "proyecto": "norestearq",
+        "equipo": "Nombre Arquitecto",
+        "fotografias": "Fotógrafo Nombre"
+      },
+      "exteriorImages": [
+        "01.jpg",
+        "02.jpg"
+      ],
+      "interiorImages": [
+        "01.jpg",
+        "02.jpg",
+        "03.jpg"
+      ]
+    },
+    {
+      "slug": "casa-rio",
+      "title": "Casa Río",
+      "m2": 220,
+      "status": "Proyecto",
+      "year": 2025,
+      "location": "Laguna Garzón, Rocha, Uruguay",
+      "credits": {
+        "proyecto": "norestearq",
+        "equipo": "Nombre Arquitecto",
+        "fotografias": "Fotógrafo Nombre"
+      },
+      "exteriorImages": [
+        "01.jpg",
+        "02.jpg",
+        "03.jpg",
+        "04.jpg"
+      ],
+      "interiorImages": [
+        "01.jpg"
+      ]
+    },
+    {
+      "slug": "estudio-norte",
+      "title": "Estudio Norte",
+      "m2": 60,
+      "status": "Construido",
+      "year": 2022,
+      "location": "Punta del Este, Maldonado, Uruguay",
+      "credits": {
+        "proyecto": "norestearq",
+        "equipo": "Nombre Arquitecto",
+        "fotografias": "Fotógrafo Nombre"
+      },
+      "exteriorImages": [
+        "01.jpg",
+        "02.jpg"
+      ],
+      "interiorImages": [
+        "01.jpg",
+        "02.jpg"
+      ]
+    },
+    {
+      "slug": "casa-bosque",
+      "title": "Casa Bosque",
+      "m2": 150,
+      "status": "Proyecto",
+      "year": 2024,
+      "location": "Manantiales, Maldonado, Uruguay",
+      "credits": {
+        "proyecto": "norestearq",
+        "equipo": "Nombre Arquitecto",
+        "fotografias": "Fotógrafo Nombre"
+      },
+      "exteriorImages": [
+        "01.jpg",
+        "02.jpg",
+        "03.jpg"
+      ],
+      "interiorImages": [
+        "01.jpg",
+        "02.jpg"
+      ]
+    },
+    {
+      "slug": "casa-clari",
+      "title": "casa clari",
+      "m2": 145,
+      "status": "Proyecto",
+      "year": 2026,
+      "location": "punta del este, el nido, uruguay",
+      "credits": {
+        "proyecto": "norestearq",
+        "equipo": "norestearq",
+        "fotografias": "norestearq"
+      },
+      "exteriorImages": [],
+      "interiorImages": []
+    }
+  ]
+}

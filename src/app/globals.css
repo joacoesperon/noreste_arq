@@ -1,26 +1,134 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Colores principales */
+  --background: #FAFAFA;
+  --foreground: #0A0A0A;
+  
+  /* Paleta norestearq */
+  --carbon: #0A0A0A;
+  --bone: #FAFAFA;
+  --anthracite: #1A1A1A;
+  --terracotta: #8B7355;
+  --concrete: #4A4A4A;
+  --sand: #D4C5B5;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-carbon: var(--carbon);
+  --color-bone: var(--bone);
+  --color-anthracite: var(--anthracite);
+  --color-terracotta: var(--terracotta);
+  --color-concrete: var(--concrete);
+  --color-sand: var(--sand);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Scroll suave global */
+html {
+  scroll-behavior: smooth;
+  overscroll-behavior: auto; /* Rebote suave contenido */
+}
+
+body {
+  overscroll-behavior: auto;
+}
+
+/* Selección de texto */
+::selection {
+  background-color: var(--carbon);
+  color: var(--bone);
+}
+
+/* Estilos tabla índice - como tenue.uy */
+.table-container {
+  width: 100%;
+}
+
+.project-row {
+  display: flex;
+  width: 100%;
+  padding: 0.5rem 0;
+  text-decoration: none;
+  border: none;
+}
+
+.project-row .project-title {
+  flex: 2;
+  font-size: 1.2rem;
+  color: #888;
+  transition: color 0.2s ease;
+}
+
+.project-row .project-status {
+  flex: 1;
+  font-size: 1.2rem;
+  color: #888;
+  text-align: center;
+  transition: color 0.2s ease;
+}
+
+.project-row .project-year {
+  width: 50px;
+  font-size: 1.2rem;
+  color: #888;
+  text-align: right;
+  transition: color 0.2s ease;
+}
+
+.project-row:hover .project-title,
+.project-row:hover .project-status,
+.project-row:hover .project-year {
+  color: var(--carbon);
+}
+
+/* Thumbnail - mantener proporción, alineado a la derecha */
+.thumbnail {
+  text-align: right;
+}
+
+.thumbnail img {
+  max-width: 100%;
+  height: auto;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.thumbnail img.fade-in {
+  opacity: 1;
+}
+
+.thumbnail.is-vertical {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.thumbnail.is-vertical img {
+  width: auto;
+  max-height: 70vh;
+}
+
+/* Masonry Grid */
+.masonry-grid {
+  display: flex;
+  margin-left: -1rem;
+  width: auto;
+}
+
+.masonry-grid-column {
+  padding-left: 1rem;
+  background-clip: padding-box;
+}
+
+.masonry-grid-column > div {
+  margin-bottom: 1rem;
 }
