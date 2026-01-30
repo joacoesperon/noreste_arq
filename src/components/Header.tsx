@@ -21,7 +21,7 @@ export default function Header() {
       <div className="container">
         {/* Logo centrado */}
         <a href="/" className="logo" data-title="NORESTE ARQ">
-          noreste arq
+          noreste arch
         </a>
 
         {/* Menú hamburguesa (móvil) */}

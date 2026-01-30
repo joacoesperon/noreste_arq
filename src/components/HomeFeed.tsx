@@ -75,6 +75,18 @@ export default function HomeFeed({ projects, logoImage }: Props) {
     const createIndexScrollTrigger = () => {
       ScrollTrigger.getAll().forEach(trigger => trigger.kill());
 
+      if (presentationLogo) {
+        gsap.to(presentationLogo, {
+          opacity: 0,
+          scrollTrigger: {
+            trigger: page,
+            start: "top top",
+            end: "+=300",
+            scrub: true,
+          },
+        });
+      }
+
       gsap.matchMedia().add({
         desktop: "(min-aspect-ratio: 1068/798)",
         tablet: "(max-aspect-ratio: 1068/798)",
@@ -200,21 +212,6 @@ export default function HomeFeed({ projects, logoImage }: Props) {
         };
       });
 
-      // Presentation animation - usando window
-      const presentationElement = document.querySelector('.presentation');
-      if (presentationElement) {
-        gsap.to(".presentation", {
-          opacity: 0,
-          scrollTrigger: {
-            trigger: ".presentation-spacer",
-            start: "top top",
-            end: "center top",
-            scrub: 0.5,
-            // Sin scroller = usa window
-          }
-        });
-      }
-
       ScrollTrigger.refresh();
     };
 
@@ -229,14 +226,6 @@ export default function HomeFeed({ projects, logoImage }: Props) {
           titleCurrent.classList.add('scroll');
         } else {
           titleCurrent.classList.remove('scroll');
-        }
-      }
-
-      if (presentationLogo) {
-        if (scrollTop > 200) {
-          presentationLogo.classList.add('scroll');
-        } else {
-          presentationLogo.classList.remove('scroll');
         }
       }
     };

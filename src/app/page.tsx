@@ -1,4 +1,4 @@
-import HomeHeader from "@/components/HomeHeader";
+import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import HomeFeed from "@/components/HomeFeed";
 import { getProjectsShuffled, getProjectCoverImage } from "@/lib/projects";
@@ -14,12 +14,11 @@ export default function Home() {
   }));
 
   // Logo para la presentación inicial
-  // Coloca tu logo en: public/images/logo.webp (o .svg, .png)
-  const logoImage = "/images/logo.svg";
+  const logoImage = "/images/logo.png";
 
   return (
     <>
-      <HomeHeader />
+      <Header />
       <main className="main clearfix wrapper">
         <HomeFeed projects={projectsForFeed} logoImage={logoImage} />
       </main>

@@ -3,7 +3,7 @@
 :root {
   --background: #fff;
   --foreground: #000;
-  --color-text: #C4C4C4;
+  --color-text: #000000;
   --color-text-hover: #808080;
 }
 
@@ -25,7 +25,7 @@ html {
 /* Scrollbar con fondo transparente */
 html {
   scrollbar-width: thin;
-  scrollbar-color: #C4C4C4 transparent;
+  scrollbar-color: #444444 transparent;
 }
 
 ::-webkit-scrollbar {
@@ -259,26 +259,6 @@ a:hover {
 }
 
 /* ==========================================================================
-   HOME PAGE - Header absolute, no fixed
-   ========================================================================== */
-
-/* En el home, el header debe ser absolute, no fixed */
-.header.header-home {
-  position: absolute !important;
-  background: transparent !important;
-}
-
-.header.header-home::before {
-  content: '';
-  width: 15%;
-  height: 90px;
-  position: absolute;
-  left: 0;
-  top: 0;
-  background: linear-gradient(180deg, white, transparent);
-}
-
-/* ==========================================================================
    HOME SCROLL CONTAINER - Como tenue
    ========================================================================== */
 
@@ -298,37 +278,45 @@ a:hover {
    PRESENTATION (Logo inicial home)
    ========================================================================== */
 
-.presentation {
+.section.presentation {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100dvh;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
-  padding-bottom: 45px;
+  z-index: 10;
+  padding: 0;
 }
 
 .presentation-spacer {
-  height: 0;
+  height: 100dvh;
+}
+
+.section.presentation .container {
+  max-width: 100%;
+  padding: 0;
 }
 
 .presentation .logo {
-  transition: all 0.3s ease;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+
+.presentation .logo img {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 .presentation .logo.scroll {
   opacity: 0;
-}
-
-@media screen and (min-width: 992px) {
-  .presentation {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-  }
-
-  .presentation-spacer {
-    height: 100dvh;
-  }
 }
 
 /* ==========================================================================
@@ -492,15 +480,21 @@ a:hover {
   color: #C4C4C4 !important;
 }
 
-/* Reducir espacio entre columnas - como tenue */
-.page.projects .td:first-child {
-  width: auto;
-  padding-right: 15px;
+/* Columnas 2 y 3 con white-space nowrap para que no se expandan */
+.page.projects .td:nth-child(1) {
+  width: 60%;
 }
 
-.page.projects .td:nth-child(2),
+.page.projects .td:nth-child(2) {
+  white-space: nowrap;
+  width: 20%;
+  text-align: center;
+}
+
 .page.projects .td:nth-child(3) {
   white-space: nowrap;
+  width: 20%;
+  text-align: center;
 }
 
 .page.projects .th {
