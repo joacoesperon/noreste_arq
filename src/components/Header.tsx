@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 export default function Header() {
   const pathname = usePathname();
@@ -20,9 +21,9 @@ export default function Header() {
     <header className="header">
       <div className="container">
         {/* Logo centrado */}
-        <a href="/" className="header-title" data-title="NORESTE ARCH">
+        <Link href="/" className="header-title" data-title="NORESTE ARCH">
           noreste arch
-        </a>
+        </Link>
 
         {/* Menú hamburguesa (móvil) */}
         <div 
@@ -37,14 +38,14 @@ export default function Header() {
         {/* Navigation */}
         <nav className={`navigation ${menuOpen ? 'active' : ''}`}>
           <ul className="menu menu-left list-unstyled">
-            <li className={pathname === "/index" ? "current-menu-item" : ""}>
-              <a href="/index">Index</a>
+            <li className={pathname === "/indice" ? "current-menu-item" : ""}>
+              <Link href="/indice">Index</Link>
             </li>
           </ul>
 
           <ul className="menu menu-right list-unstyled">
             <li className={pathname === "/info" ? "current-menu-item" : ""}>
-              <a href="/info">Info</a>
+              <Link href="/info">Info</Link>
             </li>
           </ul>
         </nav>
