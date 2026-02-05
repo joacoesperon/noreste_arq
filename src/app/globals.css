@@ -108,18 +108,38 @@ a:hover {
 .header .container {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  position: relative;
 }
 
-.header .logo {
+.header .header-title {
   display: block;
-  max-width: 170px;
-  padding: 0;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   z-index: 22;
   transition: all .35s cubic-bezier(.3,.86,.36,.95);
   text-transform: lowercase;
   color: #C4C4C4 !important;
   text-decoration: none !important;
+  white-space: nowrap;
+}
+
+.header .header-title::after {
+  content: '';
+  display: block;
+  border-bottom: solid 1px #C4C4C4;
+  transform: scaleX(0);
+  height: 2px;
+  opacity: 1;
+  transform-origin: 100% 0%;
+  transition: transform 300ms ease-in-out;
+}
+
+.header .header-title:hover::after {
+  transform: scaleX(1);
+  transform-origin: 0% 100%;
 }
 
 /* Nav Menu hamburguesa (móvil) */
@@ -216,12 +236,13 @@ a:hover {
     position: relative;
   }
 
-  .header .logo {
-    min-width: 220px;
+  .header .header-title {
     text-align: center;
     position: absolute;
-    left: calc(50% - 110px);
-    top: 10px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    min-width: auto;
   }
 
   .header .nav-menu {
@@ -518,6 +539,8 @@ a:hover {
 .page.projects .thumbnail {
   position: sticky;
   top: 78px;
+  width: 100%;
+  height: calc(100vh - 170px);
 }
 
 .page.projects .thumbnail img {
@@ -560,6 +583,7 @@ a:hover {
   display: flex;
   flex-wrap: wrap;
   margin: 0 -0.5rem;
+  justify-content: center;
 }
 
 .page.contact .col-12 {
@@ -639,14 +663,11 @@ a:hover {
    SINGLE PROJECT
    ========================================================================== */
 
-.single.projects .content .title {
-  max-width: 900px;
-  margin: 0 auto;
-}
-
+/* SINGLE PROJECT Header */
 .single.projects .content .title h1 {
   font-size: clamp(16px, 0.278vw + 0.938rem, 19px);
   margin-bottom: 0;
+  font-weight: 500 !important;
 }
 
 /* Accordion */
@@ -656,17 +677,38 @@ a:hover {
   border: none;
   cursor: pointer;
   padding: 0;
+  width: 30px;
+  height: 30px;
 }
 
 .single.projects .accordion button::after {
   content: '+';
   color: #C4C4C4;
   line-height: 20px;
+  font-size: 24px;
   transition: 0.3s cubic-bezier(0.68, 0.17, 0.02, 0.86);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
-.single.projects .accordion button[aria-expanded="true"]::after {
+.single.projects .accordion button.active::after {
   content: '-';
+}
+
+.accordion-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.5s ease-in-out;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.accordion-content.show {
+  max-height: 3000px;
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Gallery */
@@ -676,18 +718,55 @@ a:hover {
 }
 
 /* Nav Projects */
-.single.projects .nav-projects {
-  display: flex;
-  justify-content: space-between;
+.nav-projects {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
   padding-bottom: 30px;
+  margin-top: 60px;
+  width: 100% !important;
 }
 
-.single.projects .nav-projects a {
-  color: #C4C4C4;
+.nav-prev, .nav-next {
+  flex: 1;
 }
 
-.single.projects .nav-projects a:hover {
-  text-decoration: underline;
+.nav-next {
+  text-align: right;
+}
+
+.nav-link {
+  text-decoration: none !important;
+  color: #C4C4C4 !important;
+  transition: color 0.3s;
+  display: inline-block;
+  line-height: 1.2;
+}
+
+.nav-link:hover {
+  color: #808080 !important;
+  text-decoration: underline !important;
+}
+
+.nav-link .project-name {
+  font-size: clamp(16px, 0.278vw + 0.938rem, 19px);
+  text-transform: capitalize;
+}
+
+.nav-link .arrow {
+  font-size: 20px;
+}
+
+.portfolio-item {
+  will-change: transform;
+  margin-bottom: 2rem !important; /* Espacio uniforme entre piezas */
+}
+
+/* Gallery */
+.single.projects .gallery .img-single-project {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 
 /* ==========================================================================
@@ -766,6 +845,10 @@ a:hover {
 
 .text-center {
   text-align: center !important;
+}
+
+.justify-content-center {
+  justify-content: center !important;
 }
 
 .section {

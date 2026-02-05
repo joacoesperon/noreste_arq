@@ -2,6 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Project } from "@/lib/projects";
+import { Fancybox } from "@fancyapps/ui";
+import "@fancyapps/ui/dist/fancybox/fancybox.css";
+import Link from "next/link";
+import Image from "next/image";
 
 type ProjectImage = {
   src: string;
@@ -17,51 +21,55 @@ type Props = {
 
 export default function ProjectClient({ project, images, prevProject, nextProject }: Props) {
   const [showCredits, setShowCredits] = useState(false);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
-  const loadedCount = useRef(0);
   const galleryRef = useRef<HTMLDivElement>(null);
 
-  // Esperar a que las imágenes carguen para masonry
+  // Initialize Fancybox and Masonry
   useEffect(() => {
-    loadedCount.current = 0;
-    setImagesLoaded(false);
-  }, [project.slug]);
+    // Fancybox
+    Fancybox.bind('[data-fancybox="gallery"]', {
+      Hash: false,
+      Thumbs: {
+        autoStart: false,
+      },
+    });
 
-  const handleImageLoad = () => {
-    loadedCount.current += 1;
-    if (loadedCount.current >= images.length) {
-      setImagesLoaded(true);
-      // Inicializar Masonry después de que todas las imágenes carguen
-      if (galleryRef.current && typeof window !== 'undefined') {
-        import('masonry-layout').then((Masonry) => {
-          import('imagesloaded').then((imagesLoaded) => {
-            const container = galleryRef.current;
-            if (container) {
-              imagesLoaded.default(container, () => {
-                new Masonry.default(container, {
-                  percentPosition: true,
-                  itemSelector: '.portfolio-item',
-                });
+    // Masonry
+    let msnry: any;
+    if (galleryRef.current) {
+      import("imagesloaded").then((imagesLoaded) => {
+        import("masonry-layout").then((Masonry) => {
+          if (galleryRef.current) {
+            imagesLoaded.default(galleryRef.current, () => {
+              msnry = new Masonry.default(galleryRef.current!, {
+                percentPosition: true,
+                itemSelector: ".portfolio-item",
+                columnWidth: ".portfolio-item",
+                transitionDuration: "0.3s",
               });
-            }
-          });
+            });
+          }
         });
-      }
+      });
     }
-  };
+
+    return () => {
+      Fancybox.destroy();
+      if (msnry) msnry.destroy();
+    };
+  }, [project.slug, images]);
 
   const toggleCredits = () => {
     setShowCredits(!showCredits);
   };
 
   return (
-    <>
+    <div className="single projects">
       {/* Content - Info del proyecto */}
       <section className="section content">
         <div className="container">
           <div className="title text-center">
-            <h1>{project.title}, {project.m2}M<sup>2</sup>, {project.year}</h1>
-            <p>{project.location}</p>
+            <h1>{project.title}, {project.m2}M2 , {project.year}</h1>
+            <p>{project.location}.</p>
 
             {/* Acordeón para créditos */}
             <div className="accordion" id="accordionCredits">
@@ -76,17 +84,19 @@ export default function ProjectClient({ project, images, prevProject, nextProjec
 
                 <div 
                   id="seeMore" 
-                  className={`accordion-collapse ${showCredits ? 'show' : ''}`}
+                  className={`accordion-content ${showCredits ? 'show' : ''}`}
                 >
-                  <br />
-                  <p>Project:</p>
-                  <p>{project.credits.proyecto}</p>
-                  <br />
-                  <p>Team:</p>
-                  <p>{project.credits.equipo}</p>
-                  <br />
-                  <p>Photography:</p>
-                  <p>{project.credits.fotografias}</p>
+                  <div className="pt-4 pb-5">
+                    {Object.entries(project.credits).map(([key, value]) => {
+                      if (!value) return null;
+                      return (
+                        <div key={key} className="mb-4">
+                          <p className="mb-0 text-capitalize font-medium">{key.charAt(0).toUpperCase() + key.slice(1)}:</p>
+                          <p className="mb-0">{value}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
@@ -95,23 +105,24 @@ export default function ProjectClient({ project, images, prevProject, nextProjec
       </section>
 
       {/* Gallery */}
-      <section className="section gallery">
+      <section className="section gallery pt-0">
         <div className="container">
           <div 
             className="row g-2 g-md-5" 
             ref={galleryRef}
-            data-masonry='{"percentPosition": true}'
           >
             {images.map((img, index) => (
-              <div key={index} className="col-12 col-md-6 portfolio-item">
-                <a href={img.src} data-fancybox="gallery" className="noloading">
+              <div key={index} className="col-12 col-md-6 portfolio-item mb-4">
+                <a 
+                  href={img.src} 
+                  data-fancybox="gallery" 
+                  className="noloading block relative w-full aspect-auto"
+                >
                   <img
                     src={img.src}
                     alt={`${project.title} - ${img.type} ${index + 1}`}
-                    className="img-fluid img-single-project"
-                    loading="lazy"
-                    onLoad={handleImageLoad}
-                    style={{ opacity: imagesLoaded ? 1 : 0, transition: 'opacity 0.3s' }}
+                    className="img-fluid img-single-project w-full h-auto"
+                    loading={index < 4 ? "eager" : "lazy"}
                   />
                 </a>
               </div>
@@ -122,38 +133,26 @@ export default function ProjectClient({ project, images, prevProject, nextProjec
 
       {/* Nav Projects */}
       <div className="nav-projects container">
-        <div className="prev">
-          {prevProject ? (
-            <a href={`/projects/${prevProject.slug}`}>
-              {prevProject.title}
+        <div className="nav-prev">
+          {prevProject && (
+            <Link href={`/projects/${prevProject.slug}`} className="nav-link">
+              <span className="project-name">{prevProject.title}</span>
               <br />
-              &lt;
-            </a>
-          ) : (
-            <span style={{ opacity: 0.3 }}>
-              —
-              <br />
-              &lt;
-            </span>
+              <span className="arrow">&lt;</span>
+            </Link>
           )}
         </div>
 
-        <div className="next text-end">
-          {nextProject ? (
-            <a href={`/projects/${nextProject.slug}`}>
-              {nextProject.title}
+        <div className="nav-next">
+          {nextProject && (
+            <Link href={`/projects/${nextProject.slug}`} className="nav-link">
+              <span className="project-name">{nextProject.title}</span>
               <br />
-              &gt;
-            </a>
-          ) : (
-            <span style={{ opacity: 0.3 }}>
-              —
-              <br />
-              &gt;
-            </span>
+              <span className="arrow">&gt;</span>
+            </Link>
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

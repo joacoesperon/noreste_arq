@@ -79,9 +79,9 @@ export default function HomeFeed({ projects, logoImage }: Props) {
         gsap.to(presentationLogo, {
           opacity: 0,
           scrollTrigger: {
-            trigger: page,
+            trigger: ".presentation-spacer",
             start: "top top",
-            end: "+=300",
+            end: "40% top",
             scrub: true,
           },
         });

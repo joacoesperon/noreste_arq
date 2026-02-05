@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 
 type ProjectForIndex = {
   slug: string;
@@ -15,51 +17,22 @@ type Props = {
 };
 
 export default function IndexClient({ projects }: Props) {
-  const thumbnailRef = useRef<HTMLImageElement>(null);
-  const thumbnailContainerRef = useRef<HTMLDivElement>(null);
+  const [activeImage, setActiveImage] = useState(projects[0]?.image || "");
+  const [isVertical, setIsVertical] = useState(false);
+  const [isFading, setIsFading] = useState(true);
 
-  useEffect(() => {
-    const rows = document.querySelectorAll('.page.projects .tr');
-    const thumbnail = thumbnailRef.current;
-    const thumbnailContainer = thumbnailContainerRef.current;
-
-    if (!thumbnail || !thumbnailContainer) return;
-
-    const handleMouseOver = function (this: HTMLElement) {
-      const imageUrl = this.getAttribute("data-image");
-      if (imageUrl) {
-        const img = new Image();
-        img.onload = function () {
-          thumbnailContainer.classList.remove("is-vertical");
-          if (img.height > img.width) {
-            thumbnailContainer.classList.add("is-vertical");
-          }
-          thumbnail.classList.remove("fade-in");
-          thumbnail.src = imageUrl;
-          setTimeout(() => {
-            thumbnail.classList.add("fade-in");
-          }, 10);
-        };
-        img.src = imageUrl;
-      }
+  const handleMouseEnter = (imageUrl: string) => {
+    setIsFading(false);
+    
+    // Preload to check orientation
+    const img = new window.Image();
+    img.onload = () => {
+      setIsVertical(img.height > img.width);
+      setActiveImage(imageUrl);
+      setIsFading(true);
     };
-
-    const handleMouseOut = function () {
-      thumbnail.classList.remove("fade-in");
-    };
-
-    rows.forEach((row) => {
-      row.addEventListener("mouseover", handleMouseOver);
-      row.addEventListener("mouseout", handleMouseOut);
-    });
-
-    return () => {
-      rows.forEach((row) => {
-        row.removeEventListener("mouseover", handleMouseOver);
-        row.removeEventListener("mouseout", handleMouseOut);
-      });
-    };
-  }, []);
+    img.src = imageUrl;
+  };
 
   return (
     <div className="row feed-projects">
@@ -67,16 +40,17 @@ export default function IndexClient({ projects }: Props) {
         <div className="table">
           <div className="tbody">
             {projects.map((project) => (
-              <a
+              <Link
                 key={project.slug}
                 href={`/projects/${project.slug}`}
                 className="tr"
-                data-image={project.image}
+                onMouseEnter={() => handleMouseEnter(project.image)}
+                onMouseLeave={() => setIsFading(false)}
               >
                 <div className="td">{project.title}</div>
                 <div className="td">{project.status}</div>
                 <div className="td">{project.year}</div>
-              </a>
+              </Link>
             ))}
             <div className="spacer"></div>
             <div className="spacer"></div>
@@ -85,14 +59,19 @@ export default function IndexClient({ projects }: Props) {
       </div>
       
       <div className="col-12 col-md-6 d-none d-md-block text-end">
-        <div className="thumbnail" ref={thumbnailContainerRef}>
-          <img
-            id="project-thumbnail"
-            ref={thumbnailRef}
-            src={projects[0]?.image}
-            alt=""
-            className="img-fluid"
-          />
+        <div className={`thumbnail ${isVertical ? "is-vertical" : ""}`}>
+          {activeImage && (
+            <div className={`relative w-full h-full transition-opacity duration-500 ${isFading ? "opacity-100" : "opacity-0"}`}>
+              <Image
+                src={activeImage}
+                alt="Project thumbnail"
+                fill
+                className="object-contain"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

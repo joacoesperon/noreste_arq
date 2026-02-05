@@ -1,11 +1,10 @@
-"use client";
-
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import Image from "next/image";
 
-// Coloca tu imagen de info en: public/images/info.webp (o .jpg, .png)
-// Por ahora usamos un placeholder
+// Imagen de info
 const infoImage = "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1600&q=80";
+//const infoImage = "/images/info.svg";
 
 export default function InfoPage() {
   return (
@@ -15,13 +14,19 @@ export default function InfoPage() {
         <div className="page contact">
           <section className="section content pt-3">
             <div className="container">
-              {/* Imagen */}
-              <div className="image">
-                <img src={infoImage} alt="Equipo noreste arq" className="img-fluid" />
+              {/* Imagen optimizada */}
+              <div className="image relative w-full h-[60vh] md:h-[80vh]">
+                <Image 
+                  src={infoImage} 
+                  alt="Equipo noreste arq" 
+                  fill 
+                  className="object-cover"
+                  priority
+                />
               </div>
 
-              {/* Contenido: 2 columnas */}
-              <div className="row pt-5 g-3">
+              {/* Contenido: 2 columnas centradas */}
+              <div className="row pt-5 g-3 justify-content-center">
                 {/* Contacto - izquierda */}
                 <div className="col-12 col-md-4 order-md-1">
                   <article>

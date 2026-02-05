@@ -2,9 +2,14 @@ import fs from 'fs';
 import path from 'path';
 
 export type ProjectCredits = {
-  proyecto: string;
-  equipo: string;
-  fotografias: string;
+  proyecto?: string | null;
+  equipo?: string | null;
+  obra?: string | null;
+  paisajismo?: string | null;
+  interiorismo?: string | null;
+  instalaciones?: string | null;
+  estructura?: string | null;
+  fotografias?: string | null;
 };
 
 export type Project = {
@@ -68,14 +73,19 @@ export function getProjectBySlug(slug: string): Project | undefined {
   return projects.find(p => p.slug === slug);
 }
 
-// Obtener proyecto anterior y siguiente (para navegación)
+// Obtener proyecto anterior y siguiente (para navegación circular)
 export function getAdjacentProjects(slug: string): { prev: Project | null; next: Project | null } {
   const projects = getProjectsSortedByYear();
   const currentIndex = projects.findIndex(p => p.slug === slug);
   
+  if (currentIndex === -1) return { prev: null, next: null };
+
+  const prevIndex = (currentIndex - 1 + projects.length) % projects.length;
+  const nextIndex = (currentIndex + 1) % projects.length;
+
   return {
-    prev: currentIndex > 0 ? projects[currentIndex - 1] : null,
-    next: currentIndex < projects.length - 1 ? projects[currentIndex + 1] : null,
+    prev: projects[prevIndex],
+    next: projects[nextIndex],
   };
 }
 
