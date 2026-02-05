@@ -31,7 +31,7 @@ export default function ProjectClient({ project, images, prevProject, nextProjec
       Thumbs: {
         autoStart: false,
       },
-    });
+    } as any);
 
     // Masonry
     let msnry: any;

@@ -5,12 +5,10 @@
   --foreground: #000;
   --color-text: #000000;
   --color-text-hover: #808080;
-}
-
-@theme inline {
+  
+  /* Tailwind v4 mapea estas variables automáticamente si se definen así */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-text: var(--color-text);
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
@@ -776,10 +774,6 @@ a:hover {
 .main {
   width: 100%;
   min-height: 80vh;
-}
-
-.footer {
-  /* vacío como tenue */
 }
 
 /* ==========================================================================
