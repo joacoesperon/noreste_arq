@@ -111,7 +111,7 @@ a:hover {
   justify-content: space-between;
 }
 
-.header .logo {
+.header .header-title {
   display: block;
   max-width: 170px;
   padding: 0;
@@ -120,6 +120,23 @@ a:hover {
   text-transform: lowercase;
   color: #C4C4C4 !important;
   text-decoration: none !important;
+  position: relative; /* Add position relative */
+}
+
+.header .header-title::after {
+  content: '';
+  position: absolute; /* Position it absolutely */
+  left: 0;
+  bottom: -5px; /* Position it slightly below the text */
+  width: 100%;
+  border-bottom: solid 1px #C4C4C4;
+  transform: scaleX(0);
+  transform-origin: left; /* Animate from left to right */
+  transition: transform 300ms ease-in-out;
+}
+
+.header .header-title:hover::after {
+  transform: scaleX(1);
 }
 
 /* Nav Menu hamburguesa (móvil) */
@@ -216,7 +233,7 @@ a:hover {
     position: relative;
   }
 
-  .header .logo {
+  .header .header-title {
     min-width: 220px;
     text-align: center;
     position: absolute;

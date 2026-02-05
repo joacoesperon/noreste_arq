@@ -20,7 +20,7 @@ export default function Header() {
     <header className="header">
       <div className="container">
         {/* Logo centrado */}
-        <a href="/" className="logo" data-title="NORESTE ARQ">
+        <a href="/" className="header-title" data-title="NORESTE ARCH">
           noreste arch
         </a>
 
