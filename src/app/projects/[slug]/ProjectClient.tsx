@@ -35,7 +35,7 @@ export default function ProjectClient({ project, media, prevProject, nextProject
     Fancybox.bind('[data-fancybox="gallery"]', {
       hash: false,
       thumbs: {
-        autoStart: false,
+        autoStart: true,
       },
     } as never);
 

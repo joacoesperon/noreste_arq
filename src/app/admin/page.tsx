@@ -21,6 +21,7 @@ import Header from "@/components/Header";
 import { SortableImage } from "@/components/SortableImage";
 import { SortableProjectRow } from "@/components/SortableProjectRow";
 import type { Project, ProjectCredits } from "@/lib/projects";
+import { supabase } from "@/lib/supabase";
 
 type ProjectForm = {
   slug: string;
@@ -132,6 +133,8 @@ export default function AdminPage() {
   
   const [currentImages, setCurrentImages] = useState<string[]>([]);
   const [currentVideos, setCurrentVideos] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<{[filename: string]: number}>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   // Limpiar mensajes después de 2 segundos
   useEffect(() => {
@@ -278,6 +281,61 @@ export default function AdminPage() {
     }
   };
 
+  const uploadFileDirectly = async (
+    file: File,
+    slug: string,
+    type: 'images' | 'videos'
+  ): Promise<string> => {
+    // 1. Obtener firma del servidor
+    const sigRes = await fetch(
+      `/api/cloudinary/signature?folder=${slug}`
+    );
+
+    if (!sigRes.ok) {
+      throw new Error('Error al obtener firma de autenticación');
+    }
+
+    const { timestamp, signature, api_key, cloud_name, folder } = await sigRes.json();
+
+    // 2. Preparar FormData para Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('timestamp', timestamp.toString());
+    formData.append('signature', signature);
+    formData.append('api_key', api_key);
+    formData.append('folder', folder);
+
+    // 3. Subir directamente a Cloudinary con progreso
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+
+      // Tracking de progreso
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const progress = Math.round((e.loaded / e.total) * 100);
+          setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          setUploadProgress(prev => ({ ...prev, [file.name]: 100 }));
+          resolve(response.secure_url);
+        } else {
+          reject(new Error(`Upload failed: ${xhr.statusText}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error'));
+      xhr.timeout = 120000; // 2 minutos
+      xhr.ontimeout = () => reject(new Error('Timeout - archivo muy grande o conexión lenta'));
+
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloud_name}/auto/upload`);
+      xhr.send(formData);
+    });
+  };
+
   const handleDelete = async (slug: string) => {
     if (!confirm(`¿Eliminar el proyecto "${slug}"?`)) return;
     setLoading(true);
@@ -324,29 +382,117 @@ export default function AdminPage() {
         throw new Error(data.error || "Error al guardar");
       }
 
+      // Subir nuevas imágenes directamente a Cloudinary
       if (newImages.length > 0) {
-        const formData = new FormData();
-        newImages.forEach(img => formData.append("images", img));
-        await fetch(`/api/projects/${form.slug}/images?type=images`, { method: "POST", body: formData });
+        setIsUploading(true);
+        try {
+          // Validar tamaño de archivos (100MB límite)
+          const MAX_SIZE = 100 * 1024 * 1024;
+          const oversized = newImages.filter(img => img.size > MAX_SIZE);
+          if (oversized.length > 0) {
+            throw new Error(`Archivos muy grandes (>100MB): ${oversized.map(f => f.name).join(', ')}`);
+          }
+
+          // Subir archivos en paralelo
+          const results = await Promise.allSettled(
+            newImages.map(img => uploadFileDirectly(img, form.slug, 'images'))
+          );
+
+          // Separar exitosos y fallidos
+          const successful = results
+            .filter(r => r.status === 'fulfilled')
+            .map(r => (r as PromiseFulfilledResult<string>).value);
+
+          const failed = results
+            .filter(r => r.status === 'rejected')
+            .map((r, i) => newImages[i].name);
+
+          if (failed.length > 0) {
+            console.warn('Archivos fallidos:', failed);
+          }
+
+          // Actualizar Supabase con las URLs exitosas
+          if (successful.length > 0) {
+            const { data: project } = await supabase
+              .from('projects')
+              .select('images')
+              .eq('slug', form.slug)
+              .single();
+
+            await supabase
+              .from('projects')
+              .update({ images: [...(project?.images || []), ...successful] })
+              .eq('slug', form.slug);
+
+            setCurrentImages(prev => [...prev, ...successful]);
+          }
+
+          if (failed.length > 0) {
+            throw new Error(`Fallaron ${failed.length} archivo(s): ${failed.join(', ')}`);
+          }
+        } finally {
+          setIsUploading(false);
+          setUploadProgress({});
+        }
       }
-      
+
+      // Subir nuevos videos directamente a Cloudinary
       if (newVideos.length > 0) {
-        const formData = new FormData();
-        newVideos.forEach(vid => formData.append("videos", vid));
-        await fetch(`/api/projects/${form.slug}/images?type=videos`, { method: "POST", body: formData });
+        setIsUploading(true);
+        try {
+          const MAX_SIZE = 100 * 1024 * 1024;
+          const oversized = newVideos.filter(vid => vid.size > MAX_SIZE);
+          if (oversized.length > 0) {
+            throw new Error(`Videos muy grandes (>100MB): ${oversized.map(f => f.name).join(', ')}`);
+          }
+
+          const results = await Promise.allSettled(
+            newVideos.map(vid => uploadFileDirectly(vid, form.slug, 'videos'))
+          );
+
+          const successful = results
+            .filter(r => r.status === 'fulfilled')
+            .map(r => (r as PromiseFulfilledResult<string>).value);
+
+          const failed = results
+            .filter(r => r.status === 'rejected')
+            .map((r, i) => newVideos[i].name);
+
+          if (failed.length > 0) {
+            console.warn('Videos fallidos:', failed);
+          }
+
+          if (successful.length > 0) {
+            const { data: project } = await supabase
+              .from('projects')
+              .select('videos')
+              .eq('slug', form.slug)
+              .single();
+
+            await supabase
+              .from('projects')
+              .update({ videos: [...(project?.videos || []), ...successful] })
+              .eq('slug', form.slug);
+
+            setCurrentVideos(prev => [...prev, ...successful]);
+          }
+
+          if (failed.length > 0) {
+            throw new Error(`Fallaron ${failed.length} video(s): ${failed.join(', ')}`);
+          }
+        } finally {
+          setIsUploading(false);
+          setUploadProgress({});
+        }
       }
-      
+
       setSuccess(editingSlug ? "Proyecto actualizado correctamente" : "Proyecto creado correctamente");
-      
+
       if (!editingSlug) {
         setForm(emptyForm);
         setNewImages([]);
         setNewVideos([]);
       } else {
-        const updatedRes = await fetch(`/api/projects/${editingSlug}`, { cache: 'no-store' });
-        const updatedData = await updatedRes.json();
-        setCurrentImages(updatedData.images || []);
-        setCurrentVideos(updatedData.videos || []);
         setNewImages([]);
         setNewVideos([]);
       }
@@ -526,6 +672,26 @@ export default function AdminPage() {
                   <label htmlFor="img-upload" className="block w-full py-4 border border-text text-text text-center cursor-pointer hover:bg-black hover:text-white hover:border-black transition-all lowercase text-sm tracking-[0.2em]">
                     {newImages.length > 0 ? `${newImages.length} fotos nuevas` : "+ agregar fotos"}
                   </label>
+
+                  {/* Progreso de subida de imágenes */}
+                  {newImages.length > 0 && isUploading && (
+                    <div className="space-y-3 mt-4 pt-4 border-t border-text/10">
+                      {newImages.map(img => (
+                        <div key={img.name} className="space-y-1">
+                          <div className="flex justify-between text-xs text-text/70">
+                            <span className="truncate max-w-[200px]">{img.name}</span>
+                            <span className="font-medium">{uploadProgress[img.name] || 0}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                            <div
+                              className="bg-black h-full transition-all duration-300 ease-out"
+                              style={{ width: `${uploadProgress[img.name] || 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Videos */}
@@ -560,6 +726,26 @@ export default function AdminPage() {
                   <label htmlFor="vid-upload" className="block w-full py-4 border border-text text-text text-center cursor-pointer hover:bg-black hover:text-white hover:border-black transition-all lowercase text-sm tracking-[0.2em]">
                     {newVideos.length > 0 ? `${newVideos.length} videos nuevos` : "+ agregar videos"}
                   </label>
+
+                  {/* Progreso de subida de videos */}
+                  {newVideos.length > 0 && isUploading && (
+                    <div className="space-y-3 mt-4 pt-4 border-t border-text/10">
+                      {newVideos.map(vid => (
+                        <div key={vid.name} className="space-y-1">
+                          <div className="flex justify-between text-xs text-text/70">
+                            <span className="truncate max-w-[200px]">{vid.name}</span>
+                            <span className="font-medium">{uploadProgress[vid.name] || 0}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 h-1 rounded-full overflow-hidden">
+                            <div
+                              className="bg-black h-full transition-all duration-300 ease-out"
+                              style={{ width: `${uploadProgress[vid.name] || 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </section>
