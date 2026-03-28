@@ -8,7 +8,8 @@
     --color-text-hover: #2c2c2c;
 
     /* Fonts */
-    --font-sans: var(--font-inter, 'Inter', system-ui, sans-serif);
+    --font-sans: "neue-haas-grotesk-display", var(--font-inter, 'Inter', system-ui, sans-serif);
+    --font-text: "neue-haas-grotesk-text", var(--font-inter, 'Inter', system-ui, sans-serif);
     --font-dyslexic: var(--font-lexend, 'Lexend', sans-serif);
 
     /* Fluid Typography System 

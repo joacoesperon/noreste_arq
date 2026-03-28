@@ -32,6 +32,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="light" style={{ colorScheme: 'light' }}>
+      <head>
+        <link rel="stylesheet" href="https://use.typekit.net/eml1xpb.css" />
+      </head>
       <body className={`${inter.variable} ${lexend.variable} font-sans`}>
         {children}
         <AccessibilityMenu />
