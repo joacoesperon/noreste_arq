@@ -6,6 +6,7 @@ import { Fancybox } from "@fancyapps/ui";
 import "@fancyapps/ui/dist/fancybox/fancybox.css";
 import Link from "next/link";
 import Image from "next/image";
+import { optimizeCloudinaryVideo } from "@/lib/media";
 
 type ProjectMedia = {
   src: string;
@@ -150,16 +151,16 @@ export default function ProjectClient({ project, media, prevProject, nextProject
                     <div className="relative w-full h-auto overflow-hidden bg-black">
                       <video
                         controls
-                        preload="auto"
+                        preload="metadata"
                         playsInline
-                        src={item.src} 
+                        src={optimizeCloudinaryVideo(item.src)}
                         className="w-full h-auto block"
                       />
-                      <a 
-                        href={item.src}
-                        data-fancybox="gallery" 
+                      <a
+                        href={optimizeCloudinaryVideo(item.src)}
+                        data-fancybox="gallery"
                         data-type="html5video"
-                        data-thumb={`${item.src}#t=0.001`}
+                        data-thumb={`${optimizeCloudinaryVideo(item.src)}#t=0.001`}
                         className="hidden"
                         aria-hidden="true"
                       ></a>

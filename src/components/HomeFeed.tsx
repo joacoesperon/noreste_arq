@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
 import Image from "next/image";
+import { optimizeCloudinaryVideo } from "@/lib/media";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -70,7 +71,12 @@ export default function HomeFeed({ projects, logoImage }: Props) {
           if (!imageWrapper) return;
           const currentScale = gsap.getProperty(imageWrapper, "scale") as number;
           if (currentScale >= 0.8) {
-            video.play().catch(() => {});
+            // iOS bloquea el autoplay si el video no está muteado en el momento
+            // de llamar a play(); lo forzamos por las dudas.
+            video.muted = true;
+            video.play().catch((err) => {
+              console.warn("No se pudo reproducir el video del feed:", err);
+            });
           } else {
             video.pause();
           }
@@ -91,9 +97,10 @@ export default function HomeFeed({ projects, logoImage }: Props) {
         if (!isReducedMotion) {
           videoRefs.current.forEach(v => v?.pause());
           if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+          // Reproducir el video apenas frenás el scroll (0.125 s) en vez de medio segundo.
           scrollTimeoutRef.current = setTimeout(() => {
             checkAndPlayVideos();
-          }, 500);
+          }, 125);
         }
       };
 
@@ -224,7 +231,7 @@ export default function HomeFeed({ projects, logoImage }: Props) {
                       </p>
                       {isVideo ? (
                         <video
-                          src={project.image}
+                          src={optimizeCloudinaryVideo(project.image, 720)}
                           autoPlay
                           muted
                           loop
@@ -265,11 +272,11 @@ export default function HomeFeed({ projects, logoImage }: Props) {
                         {isVideo ? (
                           <video
                             ref={(el) => { videoRefs.current[index] = el; }}
-                            src={project.image}
+                            src={optimizeCloudinaryVideo(project.image, 720)}
                             muted
                             loop
                             playsInline
-                            preload="auto"
+                            preload="metadata"
                             className="w-auto max-w-full h-full block object-cover z-10"
                           />
                         ) : (

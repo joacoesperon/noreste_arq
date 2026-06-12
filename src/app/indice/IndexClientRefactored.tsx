@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { optimizeCloudinaryVideo } from "@/lib/media";
 import {
   WheelPicker,
   WheelPickerWrapper,
@@ -238,7 +239,7 @@ export default function IndexClientRefactored({ projects }: Props) {
               <div key={activeImage} className="absolute inset-0">
                 {isVideoActive ? (
                   <video
-                    src={activeImage}
+                    src={optimizeCloudinaryVideo(activeImage, 1080)}
                     autoPlay
                     muted
                     loop
@@ -299,7 +300,7 @@ export default function IndexClientRefactored({ projects }: Props) {
             <div key={activeImage} className="relative w-full h-full">
               {isVideoActive ? (
                 <video
-                  src={activeImage}
+                  src={optimizeCloudinaryVideo(activeImage, 1080)}
                   autoPlay muted loop playsInline
                   className="w-full h-full object-contain object-top"
                 />

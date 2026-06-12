@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { optimizeCloudinaryVideo } from "@/lib/media";
 
 type ProjectForIndex = {
   slug: string;
@@ -88,7 +89,7 @@ export default function IndexClient({ projects }: Props) {
             <div className={`relative w-full h-full transition-opacity duration-500 ${isFading ? "opacity-100" : "opacity-0"}`}>
               {isVideoActive ? (
                 <video
-                    src={activeImage}
+                    src={optimizeCloudinaryVideo(activeImage, 1080)}
                     autoPlay
                     muted
                     loop
