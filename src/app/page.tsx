@@ -16,14 +16,11 @@ export default async function Home() {
     image: getProjectCoverImage(p),
   }));
 
-  // Logo para la presentación inicial
-  const logoImage = "/images/logo.png";
-
   return (
     <>
       <Header />
       <main className="main clearfix wrapper">
-        <HomeFeed projects={projectsForFeed} logoImage={logoImage} />
+        <HomeFeed projects={projectsForFeed} />
       </main>
       <Footer />
     </>

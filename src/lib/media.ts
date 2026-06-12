@@ -5,13 +5,16 @@
 
 /**
  * Optimiza una URL de video de Cloudinary insertando transformaciones de
- * formato/calidad/codec automáticos. Reduce drásticamente el peso, que es
- * la causa de que los videos no carguen en redes móviles.
+ * calidad y tamaño. Reduce drásticamente el peso (causa de que los videos no
+ * carguen en redes móviles) manteniendo el códec H.264 original.
  *
- * - `f_auto`  → mejor formato según el navegador.
- * - `q_auto`  → calidad automática.
- * - `vc_auto` → códec de video automático.
- * - `w_<width>` (opcional) → downscale al ancho indicado.
+ * - `q_auto`     → calidad automática (gran ahorro de peso).
+ * - `w_<width>`  → downscale al ancho indicado (opcional).
+ *
+ * IMPORTANTE: a propósito NO usamos `f_auto` ni `vc_auto`. Con ellos, Cloudinary
+ * "mejora" el video a HEVC/H.265 para Safari, que iPhones viejos (ej. iPhone 11)
+ * no reproducen de forma confiable. Sin esas flags el video queda en H.264/MP4,
+ * que es universalmente compatible en todos los dispositivos.
  *
  * Passthrough seguro: si la URL no es un video de Cloudinary o ya trae una
  * transformación, la devuelve sin tocar.
@@ -33,7 +36,7 @@ export function optimizeCloudinaryVideo(url: string, width?: number): string {
     return url;
   }
 
-  const transforms = ["f_auto", "q_auto", "vc_auto"];
+  const transforms = ["q_auto"];
   if (width) transforms.push(`w_${width}`);
 
   return `${prefix}/video/upload/${transforms.join(",")}/${rest}`;

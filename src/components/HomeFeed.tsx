@@ -17,10 +17,9 @@ type ProjectForFeed = {
 
 type Props = {
   projects: ProjectForFeed[];
-  logoImage: string;
 };
 
-export default function HomeFeed({ projects, logoImage }: Props) {
+export default function HomeFeed({ projects }: Props) {
   const [isReducedMotion, setIsReducedMotion] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -92,6 +91,9 @@ export default function HomeFeed({ projects, logoImage }: Props) {
           if (scrollTop > 200) logoContainer.classList.add('scroll');
           else logoContainer.classList.remove('scroll');
         }
+
+        // El título centrado del header reaparece al scrollear (oculto en la carátula)
+        document.documentElement.classList.toggle('home-scrolled', scrollTop > 200);
 
         // Lógica de videos (Solo si no es movimiento reducido)
         if (!isReducedMotion) {
@@ -194,6 +196,7 @@ export default function HomeFeed({ projects, logoImage }: Props) {
 
     return () => {
       document.documentElement.style.overflow = "auto";
+      document.documentElement.classList.remove('home-scrolled');
       ctx.revert();
     };
   }, [projects, isReducedMotion]);
@@ -204,12 +207,12 @@ export default function HomeFeed({ projects, logoImage }: Props) {
       <div ref={scrollerRef} className="page home home-scroll">
         <div className="presentation-spacer"></div>
         
-        {/* Presentación (Logo inicial) común a ambas versiones */}
+        {/* Presentación (Logotipo inicial) común a ambas versiones */}
         <section ref={presentationSectionRef} className="section presentation">
-          <div className="container mx-auto px-4 max-w-400">
-            <div ref={logoContainerRef} className="logo w-full flex justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={logoImage} alt="Logo" className="w-full h-auto block max-w-300" />
+          <div className="container mx-auto w-full max-w-400 px-4 md:px-8">
+            <div ref={logoContainerRef} className="logo" aria-label="noreste arq">
+              <span className="wordmark__name">noreste</span>
+              <span className="wordmark__suffix">ARQ.</span>
             </div>
           </div>
         </section>

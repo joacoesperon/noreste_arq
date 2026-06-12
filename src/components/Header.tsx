@@ -24,9 +24,9 @@ export default function Header() {
           </div>
 
           {/* Header Title - Siempre centrado */}
-          <Link 
-            href="/" 
-            className="header-title absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-center text-text text-title lowercase tracking-normal font-sans z-22 transition-all duration-350 hover:text-text-hover group"
+          <Link
+            href="/"
+            className={`header-title absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-center text-text text-title lowercase tracking-normal font-sans z-22 transition-all duration-350 hover:text-text-hover group ${pathname === "/" ? "home-hidden" : ""}`}
           >
             noreste arq
             <span className="block border-b border-text h-px w-full scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-right group-hover:origin-left"></span>
