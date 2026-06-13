@@ -5,7 +5,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Link from "next/link";
 import Image from "next/image";
-import { optimizeCloudinaryVideo } from "@/lib/media";
+import { optimizeCloudinaryVideo, cloudinaryVideoPoster } from "@/lib/media";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -234,7 +234,8 @@ export default function HomeFeed({ projects }: Props) {
                       </p>
                       {isVideo ? (
                         <video
-                          src={optimizeCloudinaryVideo(project.image, 720)}
+                          src={optimizeCloudinaryVideo(project.image, 1600)}
+                          poster={cloudinaryVideoPoster(project.image, 1280)}
                           autoPlay
                           muted
                           loop
@@ -275,7 +276,8 @@ export default function HomeFeed({ projects }: Props) {
                         {isVideo ? (
                           <video
                             ref={(el) => { videoRefs.current[index] = el; }}
-                            src={optimizeCloudinaryVideo(project.image, 720)}
+                            src={optimizeCloudinaryVideo(project.image, 1600)}
+                            poster={cloudinaryVideoPoster(project.image, 1280)}
                             muted
                             loop
                             playsInline
