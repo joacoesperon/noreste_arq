@@ -156,7 +156,10 @@ p, a, li, span, button {
     align-items: flex-end;       /* abajo */
     justify-content: flex-start; /* izquierda */
     pointer-events: none;
-    padding-bottom: 15vh;
+    /* Mobile: lo subimos un poco para que el wordmark no se solape con el
+       botón de accesibilidad (abajo-izq, 40px). El piso de 130px cubre las
+       pantallas cortas. En desktop la media query de abajo lo deja en 15vh. */
+    padding-bottom: max(18vh, 130px);
 }
 
 .presentation .logo {
