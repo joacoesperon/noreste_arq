@@ -2,6 +2,8 @@
 
 A modern, high-performance architecture portfolio and project management system built with **Next.js 15**, **TypeScript**, and **GSAP**.
 
+[norestearq.com](https://www.norestearq.com/)
+
 ## Overview
 
 Noreste Arquitectura is a minimalist digital showcase designed for architectural excellence. It features a seamless user experience through high-end animations, a dynamic masonry gallery, and a robust project management dashboard.
