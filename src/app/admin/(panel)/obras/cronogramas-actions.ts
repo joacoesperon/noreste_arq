@@ -16,6 +16,7 @@ const etapasSchema = z
         inicio: z.iso.date({ error: "Fecha de inicio inválida" }),
         fin: z.iso.date({ error: "Fecha de fin inválida" }),
         clave: z.boolean(),
+        detalle: z.string().trim().max(5000).nullish(),
       })
       .refine((e) => e.fin >= e.inicio, { message: "Hay una etapa que termina antes de empezar" })
   )

@@ -106,7 +106,8 @@ export async function guardarPaso(
       case 3: {
         const parsed = ubicacionSchema.safeParse(payload);
         if (!parsed.success) return { ok: false, error: primerError(parsed.error) };
-        const { error } = await supabase.from("obras").update(parsed.data).eq("id", id!);
+        // Si cambia la dirección, la ubicación en el mapa (radio de proveedores) se vuelve a calcular.
+        const { error } = await supabase.from("obras").update({ ...parsed.data, lat: null, lng: null }).eq("id", id!);
         if (error) throw error;
         break;
       }

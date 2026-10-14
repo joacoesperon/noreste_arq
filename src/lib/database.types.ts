@@ -105,6 +105,7 @@ export type Database = {
         Row: {
           clave: boolean
           cronograma_id: string
+          detalle: string | null
           fin: string
           id: string
           inicio: string
@@ -114,6 +115,7 @@ export type Database = {
         Insert: {
           clave?: boolean
           cronograma_id: string
+          detalle?: string | null
           fin: string
           id?: string
           inicio: string
@@ -123,6 +125,7 @@ export type Database = {
         Update: {
           clave?: boolean
           cronograma_id?: string
+          detalle?: string | null
           fin?: string
           id?: string
           inicio?: string
@@ -276,6 +279,241 @@ export type Database = {
           },
         ]
       }
+      estudio_config: {
+        Row: {
+          datos: Json
+          honorarios: Json | null
+          id: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          datos?: Json
+          honorarios?: Json | null
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          datos?: Json
+          honorarios?: Json | null
+          id?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estudio_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      indices_cac: {
+        Row: {
+          created_by: string | null
+          mes: string
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          created_by?: string | null
+          mes: string
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          created_by?: string | null
+          mes?: string
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "indices_cac_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listas_precios: {
+        Row: {
+          archivo: string | null
+          created_at: string
+          created_by: string | null
+          fecha: string
+          id: string
+          items: number
+          moneda: string
+          proveedor_id: string
+        }
+        Insert: {
+          archivo?: string | null
+          created_at?: string
+          created_by?: string | null
+          fecha: string
+          id?: string
+          items?: number
+          moneda?: string
+          proveedor_id: string
+        }
+        Update: {
+          archivo?: string | null
+          created_at?: string
+          created_by?: string | null
+          fecha?: string
+          id?: string
+          items?: number
+          moneda?: string
+          proveedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "listas_precios_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "listas_precios_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_equivalencias: {
+        Row: {
+          id: string
+          material_id: string
+          proveedor_id: string
+          texto: string
+        }
+        Insert: {
+          id?: string
+          material_id: string
+          proveedor_id: string
+          texto: string
+        }
+        Update: {
+          id?: string
+          material_id?: string
+          proveedor_id?: string
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_equivalencias_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_equivalencias_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      material_productos_web: {
+        Row: {
+          created_at: string
+          id: string
+          material_id: string
+          nombre: string
+          producto_id: string
+          proveedor_id: string
+          ultima_lectura: string | null
+          ultimo_error: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          material_id: string
+          nombre: string
+          producto_id: string
+          proveedor_id: string
+          ultima_lectura?: string | null
+          ultimo_error?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          material_id?: string
+          nombre?: string
+          producto_id?: string
+          proveedor_id?: string
+          ultima_lectura?: string | null
+          ultimo_error?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_productos_web_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "material_productos_web_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materiales: {
+        Row: {
+          activo: boolean
+          codigo: string | null
+          created_at: string
+          id: string
+          nombre: string
+          notas: string | null
+          rubro: string
+          tipo: string
+          unidad: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          codigo?: string | null
+          created_at?: string
+          id?: string
+          nombre: string
+          notas?: string | null
+          rubro: string
+          tipo?: string
+          unidad: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          codigo?: string | null
+          created_at?: string
+          id?: string
+          nombre?: string
+          notas?: string | null
+          rubro?: string
+          tipo?: string
+          unidad?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       obra_colaboradores: {
         Row: {
           contacto: string | null
@@ -356,6 +594,120 @@ export type Database = {
           },
         ]
       }
+      obra_gastos: {
+        Row: {
+          cotizacion: number | null
+          created_at: string
+          created_by: string | null
+          detalle: string | null
+          fecha: string
+          gremio_id: string | null
+          id: string
+          moneda: string
+          monto: number
+          obra_id: string
+          pagado: boolean
+          rubro: string
+          sin_recibo: boolean
+          updated_at: string
+        }
+        Insert: {
+          cotizacion?: number | null
+          created_at?: string
+          created_by?: string | null
+          detalle?: string | null
+          fecha: string
+          gremio_id?: string | null
+          id?: string
+          moneda?: string
+          monto: number
+          obra_id: string
+          pagado?: boolean
+          rubro: string
+          sin_recibo?: boolean
+          updated_at?: string
+        }
+        Update: {
+          cotizacion?: number | null
+          created_at?: string
+          created_by?: string | null
+          detalle?: string | null
+          fecha?: string
+          gremio_id?: string | null
+          id?: string
+          moneda?: string
+          monto?: number
+          obra_id?: string
+          pagado?: boolean
+          rubro?: string
+          sin_recibo?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_gastos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_gastos_gremio_id_fkey"
+            columns: ["gremio_id"]
+            isOneToOne: false
+            referencedRelation: "obra_gremios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_gastos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_gremios: {
+        Row: {
+          created_at: string
+          id: string
+          moneda: string
+          monto_acordado: number | null
+          nombre: string
+          notas: string | null
+          obra_id: string
+          rubro: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          moneda?: string
+          monto_acordado?: number | null
+          nombre: string
+          notas?: string | null
+          obra_id: string
+          rubro?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          moneda?: string
+          monto_acordado?: number | null
+          nombre?: string
+          notas?: string | null
+          obra_id?: string
+          rubro?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_gremios_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obra_sectores: {
         Row: {
           id: string
@@ -404,6 +756,8 @@ export type Database = {
           direccion: string | null
           estado: string
           id: string
+          lat: number | null
+          lng: number | null
           localidad: string | null
           notas: string | null
           obra_duracion_meses: number | null
@@ -428,6 +782,8 @@ export type Database = {
           direccion?: string | null
           estado?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           localidad?: string | null
           notas?: string | null
           obra_duracion_meses?: number | null
@@ -452,6 +808,8 @@ export type Database = {
           direccion?: string | null
           estado?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           localidad?: string | null
           notas?: string | null
           obra_duracion_meses?: number | null
@@ -513,6 +871,214 @@ export type Database = {
           },
         ]
       }
+      precios: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          descripcion_proveedor: string | null
+          fecha: string
+          fuente: string
+          id: string
+          lista_id: string | null
+          material_id: string
+          moneda: string
+          precio: number
+          proveedor_id: string
+          referencia: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          descripcion_proveedor?: string | null
+          fecha: string
+          fuente?: string
+          id?: string
+          lista_id?: string | null
+          material_id: string
+          moneda?: string
+          precio: number
+          proveedor_id: string
+          referencia?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          descripcion_proveedor?: string | null
+          fecha?: string
+          fuente?: string
+          id?: string
+          lista_id?: string | null
+          material_id?: string
+          moneda?: string
+          precio?: number
+          proveedor_id?: string
+          referencia?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "precios_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precios_lista_id_fkey"
+            columns: ["lista_id"]
+            isOneToOne: false
+            referencedRelation: "listas_precios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precios_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precios_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presupuesto_items: {
+        Row: {
+          cantidad: number
+          descripcion: string
+          id: string
+          material_id: string | null
+          orden: number
+          precio_fecha: string | null
+          precio_id: string | null
+          precio_unitario: number | null
+          presupuesto_id: string
+          proveedor: string | null
+          rubro: string
+          unidad: string | null
+        }
+        Insert: {
+          cantidad?: number
+          descripcion: string
+          id?: string
+          material_id?: string | null
+          orden?: number
+          precio_fecha?: string | null
+          precio_id?: string | null
+          precio_unitario?: number | null
+          presupuesto_id: string
+          proveedor?: string | null
+          rubro: string
+          unidad?: string | null
+        }
+        Update: {
+          cantidad?: number
+          descripcion?: string
+          id?: string
+          material_id?: string | null
+          orden?: number
+          precio_fecha?: string | null
+          precio_id?: string | null
+          precio_unitario?: number | null
+          presupuesto_id?: string
+          proveedor?: string | null
+          rubro?: string
+          unidad?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presupuesto_items_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuesto_items_precio_id_fkey"
+            columns: ["precio_id"]
+            isOneToOne: false
+            referencedRelation: "precios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuesto_items_precio_id_fkey"
+            columns: ["precio_id"]
+            isOneToOne: false
+            referencedRelation: "precios_vigentes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuesto_items_presupuesto_id_fkey"
+            columns: ["presupuesto_id"]
+            isOneToOne: false
+            referencedRelation: "presupuestos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presupuestos: {
+        Row: {
+          cac_base: string | null
+          cotizacion_usd: number | null
+          created_at: string
+          created_by: string | null
+          id: string
+          imprevistos_pct: number
+          moneda: string
+          notas: string | null
+          obra_id: string
+          radio_km: number
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          cac_base?: string | null
+          cotizacion_usd?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imprevistos_pct?: number
+          moneda?: string
+          notas?: string | null
+          obra_id: string
+          radio_km?: number
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          cac_base?: string | null
+          cotizacion_usd?: number | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          imprevistos_pct?: number
+          moneda?: string
+          notas?: string | null
+          obra_id?: string
+          radio_km?: number
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presupuestos_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presupuestos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           cover: string | null
@@ -561,6 +1127,69 @@ export type Database = {
           videos?: string[] | null
           visible?: boolean | null
           year?: number | null
+        }
+        Relationships: []
+      }
+      proveedores: {
+        Row: {
+          activo: boolean
+          contacto: string | null
+          created_at: string
+          direccion: string | null
+          email: string | null
+          id: string
+          lat: number | null
+          lng: number | null
+          localidad: string | null
+          nombre: string
+          notas: string | null
+          recordatorio: boolean
+          telefono: string | null
+          ultimo_recordatorio: string | null
+          updated_at: string
+          web: string | null
+          web_dominio: string | null
+          web_plataforma: string | null
+        }
+        Insert: {
+          activo?: boolean
+          contacto?: string | null
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          localidad?: string | null
+          nombre: string
+          notas?: string | null
+          recordatorio?: boolean
+          telefono?: string | null
+          ultimo_recordatorio?: string | null
+          updated_at?: string
+          web?: string | null
+          web_dominio?: string | null
+          web_plataforma?: string | null
+        }
+        Update: {
+          activo?: boolean
+          contacto?: string | null
+          created_at?: string
+          direccion?: string | null
+          email?: string | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          localidad?: string | null
+          nombre?: string
+          notas?: string | null
+          recordatorio?: boolean
+          telefono?: string | null
+          ultimo_recordatorio?: string | null
+          updated_at?: string
+          web?: string | null
+          web_dominio?: string | null
+          web_plataforma?: string | null
         }
         Relationships: []
       }
@@ -763,27 +1392,24 @@ export type Database = {
           archivo_id: string
           created_at: string
           created_by: string | null
-          expires_at: string
+          expires_at: string | null
           id: string
-          signed_url: string
           token: string
         }
         Insert: {
           archivo_id: string
           created_at?: string
           created_by?: string | null
-          expires_at: string
+          expires_at?: string | null
           id?: string
-          signed_url: string
           token?: string
         }
         Update: {
           archivo_id?: string
           created_at?: string
           created_by?: string | null
-          expires_at?: string
+          expires_at?: string | null
           id?: string
-          signed_url?: string
           token?: string
         }
         Relationships: [
@@ -805,7 +1431,52 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      precios_vigentes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          descripcion_proveedor: string | null
+          fecha: string | null
+          fuente: string | null
+          id: string | null
+          lista_id: string | null
+          material_id: string | null
+          moneda: string | null
+          precio: number | null
+          proveedor_id: string | null
+          referencia: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "precios_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precios_lista_id_fkey"
+            columns: ["lista_id"]
+            isOneToOne: false
+            referencedRelation: "listas_precios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precios_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precios_proveedor_id_fkey"
+            columns: ["proveedor_id"]
+            isOneToOne: false
+            referencedRelation: "proveedores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       crear_version_documento: {
@@ -822,6 +1493,10 @@ export type Database = {
         Args: { p_etapas: Json; p_obra_id: string; p_tipo: string }
         Returns: string
       }
+      guardar_items_presupuesto: {
+        Args: { p_items: Json; p_presupuesto_id: string }
+        Returns: undefined
+      }
       is_staff: { Args: never; Returns: boolean }
       reemplazar_listas_obra: {
         Args: {
@@ -831,15 +1506,6 @@ export type Database = {
           p_sectores?: Json
         }
         Returns: undefined
-      }
-      visor_compartido: {
-        Args: { p_token: string }
-        Returns: {
-          expires_at: string
-          nombre: string
-          obra: string
-          signed_url: string
-        }[]
       }
     }
     Enums: {

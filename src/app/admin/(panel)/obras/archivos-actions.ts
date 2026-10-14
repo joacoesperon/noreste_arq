@@ -65,9 +65,10 @@ export async function eliminarArchivo(id: string): Promise<Resultado> {
   return { ok: true };
 }
 
-const DIAS_LINK = [7, 30, 90] as const;
+/** Días de vigencia; 0 = sin vencimiento. */
+const DIAS_LINK = [0, 7, 30, 90] as const;
 
-/** Crea un link público al visor 3D de un modelo IFC, con vencimiento. */
+/** Crea un link público al visor 3D de un modelo IFC. */
 export async function crearLinkVisor(
   archivoId: string,
   dias: number
@@ -77,21 +78,14 @@ export async function crearLinkVisor(
   if (!(DIAS_LINK as readonly number[]).includes(dias)) return { error: "Duración inválida." };
 
   const supabase = await createClient();
-  const { data: archivo } = await supabase.from("archivos").select("obra_id, storage_path").eq("id", archivoId).single();
+  const { data: archivo } = await supabase.from("archivos").select("obra_id").eq("id", archivoId).single();
   if (!archivo) return { error: "El archivo no existe." };
-
-  const segundos = dias * 24 * 60 * 60;
-  const { data: firmado, error: firmaError } = await supabase.storage
-    .from(BUCKET_ARCHIVOS)
-    .createSignedUrl(archivo.storage_path, segundos);
-  if (firmaError || !firmado) return { error: "No se pudo generar el link." };
 
   const { data, error } = await supabase
     .from("visor_links")
     .insert({
       archivo_id: archivoId,
-      signed_url: firmado.signedUrl,
-      expires_at: new Date(Date.now() + segundos * 1000).toISOString(),
+      expires_at: dias > 0 ? new Date(Date.now() + dias * 24 * 60 * 60 * 1000).toISOString() : null,
       created_by: staff.id,
     })
     .select("token")

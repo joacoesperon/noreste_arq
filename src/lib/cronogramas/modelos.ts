@@ -1,8 +1,8 @@
 import { finDe, sumarDias } from "./fechas";
 
-// Etapas de la pregunta 10 (Noreste_Modificaciones_Web_v1.pdf). Las duraciones son un
-// MODELO PROVISORIO (vivienda de ~200 m²) hasta recibir un cronograma real del estudio:
-// se escalan con los m², la tipología y los plazos cargados en la obra, y después se ajustan a mano.
+// Modelo del estudio: «Etapas estimadas de dirección ejecutiva de obra» del cronograma de
+// Casa Tots (docs/8). Duraciones de esa obra (17 meses en total), escaladas por m², tipología
+// y plazos de cada obra; después se ajustan a mano.
 
 export type TipoCronograma = "proyecto" | "obra";
 
@@ -13,30 +13,94 @@ type EtapaModelo = {
   /** Semanas de duración (0 = hito) */
   semanas: number;
   clave?: boolean;
+  /** Qué incluye (una línea por ítem) */
+  detalle?: string;
 };
 
+const MES = 4.33;
+
 const PROYECTO: EtapaModelo[] = [
-  { nombre: "Programa de necesidades y alcance", desde: 0, semanas: 2 },
-  { nombre: "Propuesta de servicios y croquis preliminares", desde: 2, semanas: 2, clave: true },
-  { nombre: "Anteproyecto", desde: 4, semanas: 5 },
-  { nombre: "Revisión del anteproyecto", desde: 9, semanas: 2, clave: true },
-  { nombre: "Proyecto ejecutivo", desde: 11, semanas: 10, clave: true },
-  { nombre: "Cotizaciones", desde: 21, semanas: 3 },
-  { nombre: "Concurso de ofertas", desde: 24, semanas: 3 },
-  { nombre: "Firma de constructor y contratos de construcción", desde: 27, semanas: 0, clave: true },
-  { nombre: "Cronograma de obra y planificación", desde: 27, semanas: 2 },
-  { nombre: "Comienzo de las etapas de obra", desde: 29, semanas: 0, clave: true },
+  {
+    nombre: "Anteproyecto",
+    desde: 0,
+    semanas: MES,
+    detalle: [
+      "Relevamiento y análisis del terreno: orientación, topografía, visuales, entorno, FOT/FOS, retiros",
+      "Reunión inicial y definición del programa de necesidades",
+      "Croquis preliminares, esquemas y renders de estudio. Ajustes y revisión con el cliente",
+      "Propuesta arquitectónica: implantación, organización funcional, volumetría y criterios de diseño",
+    ].join("\n"),
+  },
+  {
+    nombre: "Proyecto",
+    desde: MES,
+    semanas: MES,
+    clave: true,
+    detalle: [
+      "Planos arquitectónicos completos: plantas, cortes, vistas y detalles generales",
+      "Cuadro de superficies y memoria descriptiva",
+      "Planilla de carpinterías",
+      "Planos de estructura (coordinación con calculista)",
+      "Planos de instalaciones sanitarias, eléctricas y pluviales",
+      "Detalles constructivos generales",
+      "Documentación lista para gestión municipal",
+    ].join("\n"),
+  },
 ];
 
 const OBRA: EtapaModelo[] = [
-  { nombre: "Trabajos preliminares", desde: 0, semanas: 3 },
-  { nombre: "Movimiento de suelos", desde: 2, semanas: 3 },
-  { nombre: "Prefabricación en fábrica", desde: 4, semanas: 8 },
-  { nombre: "Albañilería", desde: 5, semanas: 22 },
-  { nombre: "Instalaciones sanitarias, eléctricas, HVAC y especialidades", desde: 12, semanas: 22 },
-  { nombre: "Terminaciones", desde: 30, semanas: 16 },
-  { nombre: "Puesta en marcha y plazo de garantía", desde: 46, semanas: 4, clave: true },
-  { nombre: "Relevamiento final de la obra completada", desde: 50, semanas: 2, clave: true },
+  {
+    nombre: "Obra húmeda",
+    desde: 0,
+    semanas: 7 * MES,
+    clave: true,
+    detalle: [
+      "Movimiento de suelos",
+      "Fundaciones",
+      "Estructura de hormigón y mampostería",
+      "Revoques gruesos",
+      "Contrapisos",
+      "Instalaciones embutidas",
+      "Cubierta estructural",
+    ].join("\n"),
+  },
+  {
+    nombre: "Terminaciones",
+    desde: 7 * MES,
+    semanas: 4 * MES,
+    clave: true,
+    detalle: [
+      "Revoques finos",
+      "Pintura interior y exterior",
+      "Provisión y colocación de pisos",
+      "Revestimientos interiores y exteriores",
+      "Zócalos",
+      "Provisión y colocación de aberturas",
+      "Cielorrasos",
+      "Terminaciones de cubierta",
+      "Instalaciones completas",
+      "Colocación de artefactos sanitarios",
+      "Colocación de tableros, bocas de iluminación y tomas",
+    ].join("\n"),
+  },
+  {
+    nombre: "Equipamiento fijo",
+    desde: 11 * MES,
+    semanas: 3 * MES,
+    detalle: [
+      "Diseño, fabricación y colocación de mobiliario fijo: cocina, lavaderos y baños",
+      "Colocación de carpinterías interiores",
+      "Diseño, fabricación y colocación de placares",
+      "Provisión y colocación de mesadas, bachas y griferías",
+    ].join("\n"),
+  },
+  {
+    nombre: "Semicubiertos",
+    desde: 14 * MES,
+    semanas: MES,
+    clave: true,
+    detalle: "Galerías, pérgolas, cocheras, solados exteriores y estructuras metálicas o de madera complementarias",
+  },
 ];
 
 export const MODELOS: Record<TipoCronograma, EtapaModelo[]> = { proyecto: PROYECTO, obra: OBRA };
@@ -60,7 +124,7 @@ function factorSuperficie(tipo: TipoCronograma, m2: number, tipologia: string | 
   return Math.min(Math.max(f, 0.6), 2.5);
 }
 
-export type EtapaGenerada = { nombre: string; inicio: string; fin: string; clave: boolean };
+export type EtapaGenerada = { nombre: string; inicio: string; fin: string; clave: boolean; detalle: string | null };
 
 export function generarCronograma(tipo: TipoCronograma, datos: DatosModelo): EtapaGenerada[] {
   const modelo = MODELOS[tipo];
@@ -70,6 +134,12 @@ export function generarCronograma(tipo: TipoCronograma, datos: DatosModelo): Eta
 
   return modelo.map((e) => {
     const inicio = sumarDias(datos.inicio, Math.round(e.desde * f) * 7);
-    return { nombre: e.nombre, inicio, fin: finDe(inicio, e.semanas === 0 ? 0 : Math.max(e.semanas * f, 0.5)), clave: !!e.clave };
+    return {
+      nombre: e.nombre,
+      inicio,
+      fin: finDe(inicio, e.semanas === 0 ? 0 : Math.max(e.semanas * f, 0.5)),
+      clave: !!e.clave,
+      detalle: e.detalle ?? null,
+    };
   });
 }

@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 type Doc = { id: string; tipo: string; titulo: string; version_actual: number; updated_at: string };
 
 const fecha = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Argentina/Buenos_Aires" });
-const GRUPOS = ["Propuestas y presupuestos", "Contratos", "Cronogramas"] as const;
+const GRUPOS = ["Propuestas y presupuestos", "Contratos", "Notas", "Cronogramas"] as const;
 
 export function DocumentosObra({ obraId, documentos }: { obraId: string; documentos: Doc[] }) {
   const [creando, setCreando] = useState<string | null>(null);

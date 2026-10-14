@@ -146,3 +146,6 @@
   font-size: 0.85em;
   padding: 0 0.15rem;
 }
+.editor-documento table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0.5rem 0; }
+.editor-documento td, .editor-documento th { border: 1px dashed var(--border); padding: 0.25rem 0.5rem; vertical-align: top; }
+.editor-documento .selectedCell { background: color-mix(in oklch, var(--primary) 6%, transparent); }

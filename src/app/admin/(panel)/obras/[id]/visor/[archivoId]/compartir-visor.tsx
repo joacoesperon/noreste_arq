@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { crearLinkVisor, revocarLinkVisor } from "../../../archivos-actions";
 
-type LinkVisor = { id: string; token: string; expires_at: string };
+type LinkVisor = { id: string; token: string; expires_at: string | null };
 
 const venceFormat = new Intl.DateTimeFormat("es-AR", {
   day: "numeric",
@@ -33,7 +33,7 @@ async function copiar(texto: string) {
 }
 
 export function CompartirVisor({ archivoId, links }: { archivoId: string; links: LinkVisor[] }) {
-  const [dias, setDias] = useState("30");
+  const [dias, setDias] = useState("0");
   const [nuevo, setNuevo] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -49,7 +49,8 @@ export function CompartirVisor({ archivoId, links }: { archivoId: string; links:
         <DialogHeader>
           <DialogTitle>Compartir el modelo</DialogTitle>
           <DialogDescription>
-            Quien tenga el link puede ver este modelo en 3D, sin acceso al panel ni a otros archivos.
+            Quien tenga el link puede ver este modelo en 3D, sin acceso al panel ni a otros archivos. Si revocás el
+            link, deja de funcionar en el momento.
           </DialogDescription>
         </DialogHeader>
 
@@ -59,6 +60,7 @@ export function CompartirVisor({ archivoId, links }: { archivoId: string; links:
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="0">Sin vencimiento</SelectItem>
               <SelectItem value="7">Vence en 7 días</SelectItem>
               <SelectItem value="30">Vence en 30 días</SelectItem>
               <SelectItem value="90">Vence en 90 días</SelectItem>
@@ -96,7 +98,9 @@ export function CompartirVisor({ archivoId, links }: { archivoId: string; links:
             <ul className="flex flex-col divide-y text-sm">
               {links.map((l) => (
                 <li key={l.id} className="flex items-center justify-between gap-2 py-2">
-                  <span className="text-muted-foreground">vence el {venceFormat.format(new Date(l.expires_at))}</span>
+                  <span className="text-muted-foreground">
+                    {l.expires_at ? `vence el ${venceFormat.format(new Date(l.expires_at))}` : "sin vencimiento"}
+                  </span>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon-sm" onClick={() => copiar(linkDe(l.token))} aria-label="Copiar link">
                       <Copy />

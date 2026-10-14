@@ -7,6 +7,8 @@ import { listArchivosObra } from "@/lib/archivos/queries";
 import { proximoLunes, sumarDias } from "@/lib/cronogramas/fechas";
 import { getCronogramas, type Cronograma } from "@/lib/cronogramas/queries";
 import { listDocumentos } from "@/lib/documentos/queries";
+import { listGastosObra } from "@/lib/gastos/queries";
+import { listPresupuestos } from "@/lib/presupuestador/queries";
 import type { TipoCronograma } from "@/lib/cronogramas/modelos";
 import { getObra, listStaffOptions } from "@/lib/obras/queries";
 import { listObrasOpciones, listTareasObra } from "@/lib/tareas/queries";
@@ -17,6 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CronogramaCard } from "@/components/admin/cronogramas/cronograma-card";
 import { DocumentosObra } from "@/components/admin/documentos/documentos-obra";
+import { GastosObra } from "@/components/admin/gastos/gastos-obra";
+import { PresupuestosObra } from "@/components/admin/presupuestador/presupuestos-obra";
 import { TareasProvider } from "@/components/admin/tareas/tareas-context";
 import { ArchivosObra } from "../_components/archivos-obra";
 import { EstadoBadge } from "../_components/estado-badge";
@@ -26,9 +30,7 @@ import { TareasObra } from "../_components/tareas-obra";
 
 type Props = { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> };
 
-const TABS = ["datos", "documentos", "tareas", "cronogramas", "archivos"];
-// Pestañas del alcance: se habilitan en las próximas etapas.
-const PROXIMAS = ["Presupuestos"];
+const TABS = ["datos", "documentos", "presupuestos", "gastos", "tareas", "cronogramas", "archivos"];
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -39,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ObraPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const [obra, staff, yo, tareas, archivos, obrasOpciones, cronogramas, documentos] = await Promise.all([
+  const [obra, staff, yo, tareas, archivos, obrasOpciones, cronogramas, documentos, presupuestos, gastos] = await Promise.all([
     getObra(id).catch(() => null),
     listStaffOptions(),
     getStaff(),
@@ -48,6 +50,8 @@ export default async function ObraPage({ params, searchParams }: Props) {
     listObrasOpciones(),
     getCronogramas(id).catch((): Partial<Record<TipoCronograma, Cronograma>> => ({})),
     listDocumentos(id).catch(() => []),
+    listPresupuestos(id).catch(() => []),
+    listGastosObra(id).catch(() => ({ gastos: [], gremios: [] })),
   ]);
   if (!obra) notFound();
 
@@ -114,20 +118,23 @@ export default async function ObraPage({ params, searchParams }: Props) {
           <TabsList className="max-w-full overflow-x-auto">
             <TabsTrigger value="datos">Datos</TabsTrigger>
             <TabsTrigger value="documentos">Documentos{documentos.length > 0 && ` · ${documentos.length}`}</TabsTrigger>
+            <TabsTrigger value="presupuestos">Presupuestos{presupuestos.length > 0 && ` · ${presupuestos.length}`}</TabsTrigger>
+            <TabsTrigger value="gastos">Gastos{gastos.gastos.length > 0 && ` · ${gastos.gastos.length}`}</TabsTrigger>
             <TabsTrigger value="tareas">Tareas{abiertas > 0 && ` · ${abiertas}`}</TabsTrigger>
             <TabsTrigger value="cronogramas">Cronogramas</TabsTrigger>
             <TabsTrigger value="archivos">Archivos{archivos.length > 0 && ` · ${archivos.length}`}</TabsTrigger>
-            {PROXIMAS.map((t) => (
-              <TabsTrigger key={t} value={t} disabled title="Próximamente">
-                {t}
-              </TabsTrigger>
-            ))}
           </TabsList>
           <TabsContent value="datos" className="mt-4">
             <ObraResumen obra={obra} staff={staff} />
           </TabsContent>
           <TabsContent value="documentos" className="mt-4">
             <DocumentosObra obraId={obra.id} documentos={documentos} />
+          </TabsContent>
+          <TabsContent value="presupuestos" className="mt-4">
+            <PresupuestosObra obraId={obra.id} presupuestos={presupuestos} />
+          </TabsContent>
+          <TabsContent value="gastos" className="mt-4">
+            <GastosObra obraId={obra.id} titulo={obra.titulo} gastos={gastos.gastos} gremios={gastos.gremios} />
           </TabsContent>
           <TabsContent value="tareas" className="mt-4">
             <TareasObra obraId={obra.id} tareas={tareas} hoy={hoy} />

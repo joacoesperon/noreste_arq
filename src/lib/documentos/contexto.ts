@@ -6,19 +6,16 @@ import { formatMeses } from "@/lib/obras/format";
 import { formatM2, totalesSuperficie } from "@/lib/obras/superficies";
 import { hoyAR } from "@/lib/tareas/semanas";
 import type { ContextoDocumento } from "./datos";
-import { ESTUDIO } from "./estudio";
-import { formatFechaLarga } from "./formato";
-
-/** "a, b y c" */
-function enumerar(items: string[]) {
-  if (items.length <= 1) return items.join("");
-  return `${items.slice(0, -1).join(", ")} y ${items.at(-1)}`;
-}
+import { enumerar, membreteDe, valoresEstudio, type DatosEstudio } from "./estudio";
+import { formatFechaLarga, formatFechaLargaEn } from "./formato";
+import { categoriaDeTipologia, type ConfigHonorarios } from "@/lib/honorarios/calculo";
 
 /** Datos de la obra listos para las plantillas. Lo que falta queda en "" y se marca en el documento. */
 export function contextoObra(
   obra: ObraCompleta,
-  cronogramas: Partial<Record<"proyecto" | "obra", Cronograma>>
+  cronogramas: Partial<Record<"proyecto" | "obra", Cronograma>>,
+  estudio: DatosEstudio,
+  honorarios: ConfigHonorarios
 ): ContextoDocumento {
   const t = totalesSuperficie(obra, obra.sectores);
   const m2 = (v: number) => (t.total > 0 ? formatM2(v) : "");
@@ -26,10 +23,24 @@ export function contextoObra(
   const ubicacion = [obra.direccion, obra.localidad, obra.provincia].filter(Boolean).join(", ");
   const c = obra.cliente;
   const etapas = (tipo: "proyecto" | "obra") =>
-    (cronogramas[tipo]?.etapas ?? []).map((e) => ({ nombre: e.nombre, inicio: e.inicio, fin: e.fin, clave: e.clave }));
+    (cronogramas[tipo]?.etapas ?? []).map((e) => ({ nombre: e.nombre, inicio: e.inicio, fin: e.fin, clave: e.clave, detalle: e.detalle }));
+
+  // Inicio y fin estimados: del cronograma si existe; si no, de los plazos de la ficha.
+  const todas = [...etapas("proyecto"), ...etapas("obra")];
+  const inicio = todas.reduce<string | null>((m, e) => (!m || e.inicio < m ? e.inicio : m), null) ?? obra.proyecto_inicio ?? obra.obra_inicio;
+  let fin = todas.reduce<string | null>((m, e) => (!m || e.fin > m ? e.fin : m), null);
+  if (!fin && obra.obra_inicio && obra.obra_duracion_meses) {
+    const d = new Date(`${obra.obra_inicio}T00:00:00Z`);
+    d.setUTCMonth(d.getUTCMonth() + Math.round(Number(obra.obra_duracion_meses)));
+    fin = d.toISOString().slice(0, 10);
+  }
 
   return {
     valores: {
+      "obra.inicio": inicio ? formatFechaLarga(inicio) : "",
+      "obra.fin": fin ? formatFechaLarga(fin) : "",
+      "obra.inicio_en": inicio ? formatFechaLargaEn(inicio) : "",
+      "obra.fin_en": fin ? formatFechaLargaEn(fin) : "",
       "obra.titulo": obra.titulo,
       "obra.tipologia": obra.tipologia ?? "",
       "obra.estado": estadoLabel(obra.estado),
@@ -51,10 +62,7 @@ export function contextoObra(
       "cliente.domicilio": c?.domicilio ?? "",
       "cliente.email": c?.email ?? "",
       "cliente.telefono": c?.telefono ?? "",
-      "estudio.nombre": ESTUDIO.nombre,
-      "estudio.profesionales": ESTUDIO.profesionales,
-      "estudio.email": ESTUDIO.email,
-      "estudio.telefono": ESTUDIO.telefono,
+      ...valoresEstudio(estudio),
       "fecha.hoy": formatFechaLarga(hoyAR()),
     },
     servicios: obra.servicios,
@@ -67,5 +75,8 @@ export function contextoObra(
       sectores: obra.sectores.map((s) => ({ nombre: s.nombre, total: totalesSuperficie(s).total })),
     },
     cronogramas: { proyecto: etapas("proyecto"), obra: etapas("obra") },
+    firmantesEstudio: estudio.firmantes,
+    membrete: membreteDe(estudio),
+    honorarios: { config: honorarios, categoria: categoriaDeTipologia(obra.tipologia), m2: t.total },
   };
 }

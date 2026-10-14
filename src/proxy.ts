@@ -8,8 +8,11 @@ const LOGIN_PATH = "/admin/login";
  * estudio (tabla `staff`) lo hacen el layout del panel, las API y las políticas RLS.
  */
 export async function proxy(request: NextRequest) {
-  const { response, userId } = await updateSession(request);
   const { pathname, search } = request.nextUrl;
+  // Tareas programadas de Vercel: se autentican con CRON_SECRET en la propia ruta.
+  if (pathname.startsWith("/api/cron/")) return NextResponse.next();
+
+  const { response, userId } = await updateSession(request);
 
   if (pathname === LOGIN_PATH) {
     if (userId) {

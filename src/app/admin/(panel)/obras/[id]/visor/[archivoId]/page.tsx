@@ -30,7 +30,7 @@ export default async function VisorPanelPage({ params }: Props) {
       .from("visor_links")
       .select("id, token, expires_at")
       .eq("archivo_id", archivoId)
-      .gt("expires_at", new Date().toISOString())
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order("created_at", { ascending: false }),
   ]);
   if (!firmado) notFound();

@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 export const metadata: Metadata = { title: "Plantillas" };
 
 const fecha = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Argentina/Buenos_Aires" });
-const GRUPOS = ["Propuestas y presupuestos", "Contratos", "Cronogramas"] as const;
+const GRUPOS = ["Propuestas y presupuestos", "Contratos", "Notas", "Cronogramas"] as const;
 
 export default async function PlantillasPage() {
   const personalizadas = new Map((await listPlantillasPersonalizadas()).map((p) => [p.clave, p.updated_at]));
@@ -23,6 +23,24 @@ export default async function PlantillasPage() {
           solos. Los cambios se aplican a los documentos nuevos.
         </p>
       </div>
+      <Link href="/admin/plantillas/estudio" className="group">
+        <Card className="flex-row items-center justify-between gap-3 px-4 py-3 transition-colors group-hover:bg-muted/50">
+          <div>
+            <p className="text-sm font-medium">Datos del estudio</p>
+            <p className="text-xs text-muted-foreground">Firmantes con DNI, teléfonos, correo e Instagram del encabezado y el pie.</p>
+          </div>
+          <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </Card>
+      </Link>
+      <Link href="/admin/plantillas/honorarios" className="group -mt-4">
+        <Card className="flex-row items-center justify-between gap-3 px-4 py-3 transition-colors group-hover:bg-muted/50">
+          <div>
+            <p className="text-sm font-medium">Honorarios</p>
+            <p className="text-xs text-muted-foreground">Porcentajes por tipo de obra y superficie para calcular los honorarios.</p>
+          </div>
+          <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </Card>
+      </Link>
       {GRUPOS.map((g) => (
         <section key={g} className="flex flex-col gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">{g}</h2>

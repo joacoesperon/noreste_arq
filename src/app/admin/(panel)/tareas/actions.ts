@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getStaff, type StaffUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { SITE_URL, enviarCorreo } from "@/lib/correo";
 import { checklistCompleto } from "@/lib/tareas/checklist";
 import { estadoTareaLabel } from "@/lib/tareas/constants";
 import { getTarea, type TareaDetalle } from "@/lib/tareas/queries";
@@ -31,6 +32,44 @@ async function registrar(ctx: Contexto, tareaId: string, tipo: string, detalle?:
   await ctx.supabase
     .from("tarea_eventos")
     .insert({ tarea_id: tareaId, actor_id: ctx.staff.id, tipo, detalle: detalle ?? null });
+}
+
+/** Avisos por correo de las entregas (pregunta 18): al revisor, y al responsable cuando se resuelve. */
+async function avisarEntrega(ctx: Contexto, id: string, evento: "revision" | "aprobada" | "devuelta", detalle?: string) {
+  const { data: t } = await ctx.supabase
+    .from("tareas")
+    .select("titulo, responsable_id, revisor_id, obra:obras(titulo)")
+    .eq("id", id)
+    .single();
+  if (!t) return;
+  const destinatarioId = evento === "revision" ? t.revisor_id : t.responsable_id;
+  if (!destinatarioId) return;
+  const { data: persona } = await ctx.supabase.from("staff").select("nombre, email").eq("id", destinatarioId).single();
+  if (!persona?.email) return;
+
+  const obra = t.obra?.titulo ? ` · ${t.obra.titulo}` : "";
+  const boton = { texto: evento === "revision" ? "Revisar la entrega" : "Ver la tarea", url: `${SITE_URL}/admin?tarea=${id}` };
+  const nombre = persona.nombre.split(" ")[0];
+  if (evento === "revision") {
+    await enviarCorreo({
+      para: persona.email,
+      asunto: `Entrega para revisar: ${t.titulo}${obra}`,
+      titulo: "Tenés una entrega para revisar",
+      parrafos: [`Hola ${nombre}, ${ctx.staff.nombre} envió «${t.titulo}»${obra} a revisión.`, "Revisá el checklist y la documentación, y aprobala o devolvela con lo que haya que corregir."],
+      boton,
+    });
+  } else {
+    await enviarCorreo({
+      para: persona.email,
+      asunto: `Entrega ${evento === "aprobada" ? "aprobada" : "devuelta"}: ${t.titulo}${obra}`,
+      titulo: evento === "aprobada" ? "Tu entrega fue aprobada" : "Tu entrega volvió para corregir",
+      parrafos: [
+        `Hola ${nombre}, ${ctx.staff.nombre} ${evento === "aprobada" ? "aprobó" : "devolvió"} «${t.titulo}»${obra}.`,
+        ...(detalle ? [`Qué corregir: ${detalle}`] : []),
+      ],
+      boton,
+    });
+  }
 }
 
 export async function cargarTarea(id: string): Promise<TareaDetalle | null> {
@@ -159,8 +198,7 @@ export async function enviarARevision(id: string, payload: unknown): Promise<Res
     return ERROR;
   }
   await registrar(ctx, id, "enviada_revision", datos.comentario_cierre);
-  // TODO(etapa 3, correo): avisar al revisor por mail con el link a la tarea
-  // cuando esté configurado el envío de correos (ver docs/pedidos-al-estudio.md).
+  await avisarEntrega(ctx, id, "revision");
   revalidar();
   return { ok: true, id };
 }
@@ -202,6 +240,7 @@ export async function aprobarEntrega(id: string): Promise<Resultado> {
     return ERROR;
   }
   await registrar(ctx, id, "aprobada");
+  await avisarEntrega(ctx, id, "aprobada");
   revalidar();
   return { ok: true, id };
 }
@@ -217,6 +256,7 @@ export async function devolverEntrega(id: string, comentario: string): Promise<R
   const { error } = await ctx.supabase.from("tareas").update({ estado: "en_curso" }).eq("id", id);
   if (error) return ERROR;
   await registrar(ctx, id, "devuelta", motivo);
+  await avisarEntrega(ctx, id, "devuelta", motivo);
   revalidar();
   return { ok: true, id };
 }

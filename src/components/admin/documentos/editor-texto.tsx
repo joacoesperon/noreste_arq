@@ -4,9 +4,10 @@ import { useEffect } from "react";
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
+import { TableKit } from "@tiptap/extension-table";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { Bold, Braces, Heading1, Heading2, Italic, List, ListOrdered, Minus, Redo, Underline, Undo } from "lucide-react";
+import { Bold, Braces, Columns2, Heading1, Heading2, Italic, List, ListOrdered, Minus, Redo, Rows2, Trash, Underline, Undo } from "lucide-react";
 import { BLOQUES, DATOS_FIJOS, type Dato } from "@/lib/documentos/datos";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,8 @@ export function EditorTexto({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ code: false, codeBlock: false, blockquote: false, strike: false, link: false, heading: { levels: [1, 2, 3] } }),
+      // Tablas: para textos en columnas, como el contrato bilingüe (español | inglés).
+      TableKit.configure({ table: { resizable: false } }),
       ResaltarDatos,
     ],
     content: contenido,
@@ -111,6 +114,13 @@ export function EditorTexto({
         {boton(editor.isActive("bulletList"), () => editor.chain().focus().toggleBulletList().run(), <List />, "Lista")}
         {boton(editor.isActive("orderedList"), () => editor.chain().focus().toggleOrderedList().run(), <ListOrdered />, "Lista numerada")}
         {boton(false, () => editor.chain().focus().setHorizontalRule().run(), <Minus />, "Separador")}
+        {boton(false, () => editor.chain().focus().insertTable({ rows: 2, cols: 2, withHeaderRow: false }).run(), <Columns2 />, "Insertar texto en dos columnas")}
+        {editor.isActive("table") && (
+          <>
+            {boton(false, () => editor.chain().focus().addRowAfter().run(), <Rows2 />, "Agregar fila debajo")}
+            {boton(false, () => editor.chain().focus().deleteRow().run(), <Trash />, "Borrar fila")}
+          </>
+        )}
         {boton(false, () => editor.chain().focus().undo().run(), <Undo />, "Deshacer")}
         {boton(false, () => editor.chain().focus().redo().run(), <Redo />, "Rehacer")}
         <div className="ml-auto">

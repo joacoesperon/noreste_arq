@@ -37,6 +37,15 @@ export async function crearDocumento(obraId: string, clave: string) {
   if (!obra) return { ok: false as const, error: "La obra no existe." };
 
   const plantilla = await getPlantilla(clave);
+  const datos: Record<string, unknown> = { ...(tipo.inicial ?? {}) };
+  // Índice CAC de referencia: el último mes cargado en el presupuestador.
+  if (tipo.campos.some((c) => c.key === "indice_cac")) {
+    const { data: cac } = await supabase.from("indices_cac").select("mes, valor").order("mes", { ascending: false }).limit(1).maybeSingle();
+    if (cac) {
+      datos.indice_cac = cac.valor.toLocaleString("es-AR");
+      datos.fecha_cac = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${cac.mes}T00:00:00Z`));
+    }
+  }
   const { data, error } = await supabase
     .from("documentos")
     .insert({
@@ -44,7 +53,7 @@ export async function crearDocumento(obraId: string, clave: string) {
       tipo: clave,
       titulo: `${tipo.nombre} · ${obra.titulo}`,
       contenido: plantilla.contenido as Json,
-      datos: (tipo.inicial ?? {}) as Json,
+      datos: datos as Json,
       created_by: staff.id,
     })
     .select("id")
@@ -154,5 +163,83 @@ export async function restaurarPlantilla(clave: string): Promise<Resultado> {
   const { error } = await supabase.from("plantillas").delete().eq("clave", clave);
   if (error) return { ok: false, error: "No se pudo restaurar." };
   revalidatePath("/admin/plantillas", "layout");
+  return { ok: true };
+}
+
+const estudioSchema = z.object({
+  nombre: z.string().trim().min(1, "El nombre del estudio es obligatorio").max(200),
+  email: z.string().trim().max(200),
+  instagram: z.string().trim().max(100),
+  web: z.string().trim().max(200),
+  ciudad: z.string().trim().max(200),
+  domicilio: z.string().trim().max(300),
+  firmantes: z
+    .array(
+      z.object({
+        titulo: z.string().trim().max(20),
+        nombre: z.string().trim().min(1, "Cada firmante necesita un nombre").max(200),
+        dni: z.string().trim().max(30),
+        matricula: z.string().trim().max(100),
+      })
+    )
+    .min(1, "Tiene que haber al menos un firmante")
+    .max(10),
+  telefonos: z.array(z.object({ numero: z.string().trim().min(1).max(50), nombre: z.string().trim().max(100) })).max(6),
+});
+
+/** Datos del estudio para los documentos (con DNI de los firmantes: van en la base, no en el código). */
+export async function guardarEstudio(payload: unknown): Promise<Resultado> {
+  const staff = await getStaff();
+  if (!staff) return SIN_SESION;
+  const parsed = estudioSchema.safeParse(payload);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("estudio_config")
+    .upsert({ id: true, datos: parsed.data as unknown as Json, updated_by: staff.id });
+  if (error) return { ok: false, error: "No se pudieron guardar los datos." };
+  revalidatePath("/admin", "layout");
+  return { ok: true };
+}
+
+const tramoSchema = z.object({ hasta: z.number().positive().nullable(), porcentaje: z.number().min(0).max(100) });
+const honorariosSchema = z.object({
+  categorias: z
+    .array(
+      z.object({
+        clave: z.enum(["reforma", "vivienda", "otros"]),
+        tramos: z.array(tramoSchema).min(1, "Cada tipo de obra necesita al menos un tramo").max(20),
+        proyecto: z.number().min(0).max(100),
+      })
+    )
+    .length(3),
+  anteproyecto: z.number().min(0).max(100),
+  municipal: z.number().min(0).max(100),
+  ejecutivo: z.number().min(0).max(100),
+  factorEjecutiva: z.number().min(0).max(10),
+  iva: z.number().min(0).max(100),
+});
+
+/** Tabla de honorarios. null = volver a la de la planilla del estudio. */
+export async function guardarHonorarios(payload: unknown): Promise<Resultado> {
+  const staff = await getStaff();
+  if (!staff) return SIN_SESION;
+  let valor: Json | null = null;
+  if (payload !== null) {
+    const parsed = honorariosSchema.safeParse(payload);
+    if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+    const p = parsed.data;
+    if (Math.round(p.anteproyecto + p.municipal + p.ejecutivo) !== 100) {
+      return { ok: false, error: "Anteproyecto, municipal y ejecutivo tienen que sumar 100 %." };
+    }
+    if (p.categorias.some((c) => c.tramos.filter((t) => t.hasta === null).length > 1)) {
+      return { ok: false, error: "Solo puede haber un tramo «sin límite» por tipo de obra." };
+    }
+    valor = p as unknown as Json;
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("estudio_config").update({ honorarios: valor, updated_by: staff.id }).eq("id", true);
+  if (error) return { ok: false, error: "No se pudo guardar." };
+  revalidatePath("/admin", "layout");
   return { ok: true };
 }

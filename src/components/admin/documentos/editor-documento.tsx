@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import type { JSONContent } from "@tiptap/react";
-import { AlertTriangle, ArrowLeft, FileDown, FileText, History, Loader2, RefreshCw, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ExternalLink, FileDown, FileSignature, FileText, History, Loader2, RefreshCw, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   contenidoPlantilla,
@@ -16,6 +16,7 @@ import { faltantes, type Bloque } from "@/lib/documentos/bloques";
 import type { ContextoDocumento } from "@/lib/documentos/datos";
 import { resolverDocumento } from "@/lib/documentos/resolver";
 import { tipoDocumento } from "@/lib/documentos/tipos";
+import { hoyAR } from "@/lib/tareas/semanas";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -118,11 +119,11 @@ export function EditorDocumento({
       toast.success(`Versión ${res.numero} guardada`);
     });
 
-  const exportar = async (formato: "pdf" | "docx", doc: { titulo: string; bloques: Bloque[] }, nombre: string) => {
+  const exportar = async (formato: "pdf" | "docx", doc: { titulo: string; bloques: Bloque[]; fecha?: string }, nombre: string) => {
     setExportando(formato);
     try {
-      if (formato === "pdf") await descargarPdf(doc, nombre);
-      else await descargarDocx(doc, nombre);
+      if (formato === "pdf") await descargarPdf(doc, nombre, contexto.membrete);
+      else await descargarDocx(doc, nombre, contexto.membrete);
     } catch (e) {
       console.error(e);
       toast.error("No se pudo generar el archivo.");
@@ -135,7 +136,8 @@ export function EditorDocumento({
     const data = await obtenerVersion(v.id);
     if (!data) return void toast.error("No se pudo cargar la versión.");
     const t = data.documento?.titulo ?? titulo;
-    await exportar(formato, { titulo: t, bloques: data.bloques as Bloque[] }, `${t} - v${data.numero}`);
+    // La versión sale con la fecha en que se guardó.
+    await exportar(formato, { titulo: t, bloques: data.bloques as Bloque[], fecha: hoyAR(new Date(v.created_at)) }, `${t} - v${data.numero}`);
   };
 
   return (
@@ -225,6 +227,21 @@ export function EditorDocumento({
                   </span>
                 </div>
               ))}
+              {tipo.grupo === "Contratos" && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <a href="https://firmar.gob.ar/" target="_blank" rel="noreferrer">
+                      <FileSignature />
+                      Firmar el PDF en Firmar.gob.ar
+                      <ExternalLink className="ml-auto" />
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                    Firma digital con validez legal. Después, subí el PDF firmado a Archivos → Contratos firmados.
+                  </DropdownMenuLabel>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -250,7 +267,7 @@ export function EditorDocumento({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="datos" className="mt-4">
-            <CamposDocumento campos={tipo.campos} datos={datos} onChange={cambiar(setDatos)} />
+            <CamposDocumento campos={tipo.campos} datos={datos} onChange={cambiar(setDatos)} honorarios={contexto.honorarios} />
             <p className="mt-6 text-xs text-muted-foreground">
               Los datos de la obra, el cliente y el estudio se completan solos desde la{" "}
               <Link href={`/admin/obras/${obra.id}`} className="underline">
@@ -356,7 +373,7 @@ export function EditorDocumento({
 
         <div className="min-w-0 rounded-xl bg-muted/50 p-3 sm:p-6">
           <p className="mb-3 text-xs text-muted-foreground">Vista previa</p>
-          <VistaDocumento documento={resuelto} />
+          <VistaDocumento documento={resuelto} membrete={contexto.membrete} />
         </div>
       </div>
     </div>

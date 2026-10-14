@@ -2,7 +2,7 @@ import { Diamond } from "lucide-react";
 import { diasEntre, semanasDe, sumarDias } from "@/lib/cronogramas/fechas";
 import { cn } from "@/lib/utils";
 
-export type EtapaGantt = { id?: string; nombre: string; inicio: string; fin: string; clave: boolean };
+export type EtapaGantt = { id?: string; nombre: string; inicio: string; fin: string; clave: boolean; detalle?: string | null };
 
 const mesFormat = new Intl.DateTimeFormat("es-AR", { month: "short", timeZone: "UTC" });
 const mesAnioFormat = new Intl.DateTimeFormat("es-AR", { month: "short", year: "2-digit", timeZone: "UTC" });

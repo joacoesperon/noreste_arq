@@ -1,8 +1,10 @@
 import "server-only";
+import { configHonorarios, type ConfigHonorarios } from "@/lib/honorarios/calculo";
 import type { JSONContent } from "@tiptap/core";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/database.types";
 import { plantillaBase } from "./plantillas-base";
+import { datosEstudio, type DatosEstudio } from "./estudio";
 
 type Tables = Database["public"]["Tables"];
 export type Documento = Tables["documentos"]["Row"];
@@ -43,4 +45,18 @@ export async function listPlantillasPersonalizadas() {
   const supabase = await createClient();
   const { data } = await supabase.from("plantillas").select("clave, updated_at, updated_by");
   return data ?? [];
+}
+
+/** Tabla de honorarios del estudio (con la de la planilla donde falte). */
+export async function getHonorarios(): Promise<ConfigHonorarios> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("estudio_config").select("honorarios").maybeSingle();
+  return configHonorarios(data?.honorarios);
+}
+
+/** Datos del estudio guardados (con los valores por defecto donde falten). */
+export async function getEstudio(): Promise<DatosEstudio> {
+  const supabase = await createClient();
+  const { data } = await supabase.from("estudio_config").select("datos").maybeSingle();
+  return datosEstudio(data?.datos);
 }

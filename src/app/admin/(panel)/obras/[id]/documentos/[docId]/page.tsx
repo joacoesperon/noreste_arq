@@ -4,7 +4,7 @@ import type { JSONContent } from "@tiptap/react";
 import { getObra, listStaffOptions } from "@/lib/obras/queries";
 import { getCronogramas } from "@/lib/cronogramas/queries";
 import { contextoObra } from "@/lib/documentos/contexto";
-import { getDocumento } from "@/lib/documentos/queries";
+import { getDocumento, getEstudio, getHonorarios } from "@/lib/documentos/queries";
 import { tipoDocumento } from "@/lib/documentos/tipos";
 import { EditorDocumento } from "@/components/admin/documentos/editor-documento";
 
@@ -18,11 +18,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function DocumentoPage({ params }: Props) {
   const { id, docId } = await params;
-  const [documento, obra, cronogramas, staff] = await Promise.all([
+  const [documento, obra, cronogramas, staff, estudio, honorarios] = await Promise.all([
     getDocumento(docId).catch(() => null),
     getObra(id).catch(() => null),
     getCronogramas(id).catch(() => ({})),
     listStaffOptions(),
+    getEstudio(),
+    getHonorarios(),
   ]);
   if (!documento || !obra || documento.obra_id !== obra.id || !tipoDocumento(documento.tipo)) notFound();
 
@@ -40,7 +42,7 @@ export default async function DocumentoPage({ params }: Props) {
         version_actual: documento.version_actual,
       }}
       obra={{ id: obra.id, titulo: obra.titulo }}
-      contexto={contextoObra(obra, cronogramas)}
+      contexto={contextoObra(obra, cronogramas, estudio, honorarios)}
       versiones={documento.versiones.map((v) => ({ ...v, autor: nombre(v.created_by) }))}
     />
   );

@@ -1,4 +1,6 @@
 import type { EtapaBloque } from "./bloques";
+import type { FirmanteEstudio, Membrete } from "./estudio";
+import type { ClaveCategoria, ConfigHonorarios } from "@/lib/honorarios/calculo";
 
 // Datos que se pueden usar en las plantillas como {{clave}}.
 // `bloque.*` va solo en un párrafo y se reemplaza por una tabla, lista o diagrama.
@@ -25,6 +27,10 @@ export const DATOS_FIJOS: GrupoDatos[] = [
       { key: "obra.proyecto_duracion", label: "Duración del proyecto" },
       { key: "obra.obra_inicio", label: "Inicio de obra" },
       { key: "obra.obra_duracion", label: "Duración de obra" },
+      { key: "obra.inicio", label: "Inicio estimado (todo el trabajo)" },
+      { key: "obra.fin", label: "Fin estimado (todo el trabajo)" },
+      { key: "obra.inicio_en", label: "Inicio estimado, en inglés" },
+      { key: "obra.fin_en", label: "Fin estimado, en inglés" },
     ],
   },
   {
@@ -42,8 +48,12 @@ export const DATOS_FIJOS: GrupoDatos[] = [
     datos: [
       { key: "estudio.nombre", label: "Nombre" },
       { key: "estudio.profesionales", label: "Profesionales" },
+      { key: "estudio.firmantes", label: "Firmantes con DNI" },
+      { key: "estudio.firmantes_matricula", label: "Firmantes con DNI y matrícula" },
+      { key: "estudio.domicilio", label: "Domicilio" },
       { key: "estudio.email", label: "Correo" },
-      { key: "estudio.telefono", label: "Teléfono" },
+      { key: "estudio.instagram", label: "Instagram" },
+      { key: "estudio.telefonos", label: "Teléfonos" },
     ],
   },
   {
@@ -63,6 +73,9 @@ export const BLOQUES: Dato[] = [
   { key: "bloque.presupuesto", label: "Tabla del presupuesto" },
   { key: "bloque.cronograma_proyecto", label: "Cronograma de proyecto" },
   { key: "bloque.cronograma_obra", label: "Cronograma de obra" },
+  { key: "bloque.etapas", label: "Etapas con lo que incluye (del cronograma)" },
+  { key: "bloque.forma_pago", label: "Forma de pago por hitos" },
+  { key: "bloque.forma_pago_en", label: "Forma de pago por hitos (inglés)" },
   { key: "bloque.firmas", label: "Firmas" },
 ];
 
@@ -88,4 +101,8 @@ export type ContextoDocumento = {
     sectores: { nombre: string; total: number }[];
   };
   cronogramas: { proyecto: EtapaBloque[]; obra: EtapaBloque[] };
+  firmantesEstudio: FirmanteEstudio[];
+  membrete: Membrete;
+  /** Para el botón «Calcular» de los honorarios. */
+  honorarios: { config: ConfigHonorarios; categoria: ClaveCategoria; m2: number };
 };

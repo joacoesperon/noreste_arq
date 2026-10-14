@@ -1,6 +1,6 @@
 import Image from "next/image";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/database.types";
+import { BUCKET_ARCHIVOS } from "@/lib/archivos/constants";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { VisorIfc } from "@/components/visor/visor-ifc";
 
 type Props = { params: Promise<{ token: string }> };
@@ -14,16 +14,39 @@ const venceFormat = new Intl.DateTimeFormat("es-AR", {
   timeZone: "America/Argentina/Buenos_Aires",
 });
 
+/** Busca el link y genera un acceso de 1 hora al modelo. null si no existe, venció o fue revocado. */
+async function modeloCompartido(token: string) {
+  if (!/^[0-9a-f]{64}$/.test(token)) return null;
+  const supabase = createAdminClient();
+  if (!supabase) {
+    console.error("Visor público: falta SUPABASE_SERVICE_ROLE_KEY");
+    return null;
+  }
+
+  const { data: link } = await supabase
+    .from("visor_links")
+    .select("expires_at, archivo:archivos(nombre, storage_path, obra:obras(titulo))")
+    .eq("token", token)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .maybeSingle();
+  if (!link?.archivo) return null;
+
+  const { data: firmado } = await supabase.storage
+    .from(BUCKET_ARCHIVOS)
+    .createSignedUrl(link.archivo.storage_path, 60 * 60);
+  if (!firmado) return null;
+
+  return {
+    nombre: link.archivo.nombre,
+    obra: link.archivo.obra?.titulo ?? null,
+    url: firmado.signedUrl,
+    expiresAt: link.expires_at,
+  };
+}
+
 export default async function VisorPublicoPage({ params }: Props) {
   const { token } = await params;
-  // Cliente anónimo: el único acceso es la función visor_compartido, que valida token y vencimiento.
-  const supabase = createClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false } }
-  );
-  const { data } = await supabase.rpc("visor_compartido", { p_token: token });
-  const modelo = data?.[0];
+  const modelo = await modeloCompartido(token);
 
   return (
     <div className="flex h-svh flex-col gap-4 p-4 md:p-6">
@@ -35,13 +58,13 @@ export default async function VisorPublicoPage({ params }: Props) {
             {modelo && <p className="text-xs text-muted-foreground">{modelo.nombre}</p>}
           </div>
         </div>
-        {modelo && (
-          <p className="text-xs text-muted-foreground">Disponible hasta el {venceFormat.format(new Date(modelo.expires_at))}</p>
+        {modelo?.expiresAt && (
+          <p className="text-xs text-muted-foreground">Disponible hasta el {venceFormat.format(new Date(modelo.expiresAt))}</p>
         )}
       </header>
       <main className="min-h-0 flex-1">
         {modelo ? (
-          <VisorIfc url={modelo.signed_url} nombre={modelo.nombre} />
+          <VisorIfc url={modelo.url} nombre={modelo.nombre} />
         ) : (
           <div className="flex h-full items-center justify-center rounded-lg border p-6 text-center">
             <div>

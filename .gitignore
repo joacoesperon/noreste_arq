@@ -52,3 +52,10 @@ gha-creds-*.json
 
 # visor IFC: se copia desde node_modules en postinstall
 /public/visor/
+/public/vendor/
+
+# Material del estudio: archivos pesados y datos personales (DNI, pasaportes, sueldos). No versionar.
+/docs/*/
+# Modelos del estudio con datos de terceros (nombres, domicilios, correos)
+/docs/*.docx
+*:Zone.Identifier

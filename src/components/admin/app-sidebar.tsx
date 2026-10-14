@@ -56,7 +56,7 @@ const estudio = (paraRevisar: number): NavItem[] => [
   { title: "Tablero", href: "/admin", icon: LayoutDashboard, badge: paraRevisar },
   { title: "Obras", href: "/admin/obras", icon: Building2 },
   { title: "Documentos", href: "/admin/documentos", icon: FileText },
-  { title: "Presupuestador", icon: Calculator },
+  { title: "Presupuestador", href: "/admin/presupuestador", icon: Calculator },
   { title: "Plantillas", href: "/admin/plantillas", icon: LayoutTemplate },
 ];
 

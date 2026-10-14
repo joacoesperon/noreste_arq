@@ -26,14 +26,17 @@ export function TareasProvider({
   yo,
   staff,
   obras,
+  inicial = null,
   children,
 }: {
   yo: string;
   staff: StaffOption[];
   obras: ObraOpcion[];
+  /** Tarea a abrir al entrar (link de los avisos por correo). */
+  inicial?: string | null;
   children: React.ReactNode;
 }) {
-  const [abierta, setAbierta] = useState<string | null>(null);
+  const [abierta, setAbierta] = useState<string | null>(inicial);
   const nombre = (id: string | null) => (id ? (staff.find((s) => s.id === id)?.nombre ?? null) : null);
 
   return (

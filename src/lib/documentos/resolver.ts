@@ -3,9 +3,16 @@ import { formatM2 } from "@/lib/obras/superficies";
 import { semanasDe } from "@/lib/cronogramas/fechas";
 import type { Bloque, DocumentoResuelto, FilaTabla, Run } from "./bloques";
 import { labelDato, type ContextoDocumento } from "./datos";
-import { ESTUDIO } from "./estudio";
 import { MONEDAS, formatFechaCorta, formatFechaLarga, formatMonto, parseMonto, type Moneda } from "./formato";
-import { SECCIONES_PRESUPUESTO, type Firmante, type ItemPresupuesto, type TipoDocumento } from "./tipos";
+import {
+  JURISDICCIONES,
+  SECCIONES_PRESUPUESTO,
+  type Firmante,
+  type ItemHito,
+  type ItemPresupuesto,
+  type Jurisdiccion,
+  type TipoDocumento,
+} from "./tipos";
 
 const TOKEN = /\{\{\s*([\w.]+)\s*\}\}/g;
 const SOLO_BLOQUE = /^\s*\{\{\s*(bloque\.\w+)\s*\}\}\s*$/;
@@ -34,13 +41,54 @@ function valorCampo(entrada: Entrada, key: string): { valor: string; opcional: b
       valor = formatFechaLarga(texto);
     } else if (campo.tipo === "moneda") {
       valor = MONEDAS.find((m) => m.value === texto)?.label ?? texto;
+    } else if (campo.tipo === "opcion") {
+      valor = campo.opciones?.find((o) => o.value === texto)?.label ?? texto;
+    } else if (campo.tipo === "booleano") {
+      valor = crudo === true ? "Sí" : "No";
     }
   }
   return { valor, opcional: !!campo.opcional };
 }
 
+const MESES_EN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+/** 2026-03-02 → "2nd day of March, 2026" (como en el contrato NE26). */
+function fechaFirmaEn(fecha: string) {
+  const [a, m, d] = fecha.split("-").map(Number);
+  const sufijo = d % 10 === 1 && d !== 11 ? "st" : d % 10 === 2 && d !== 12 ? "nd" : d % 10 === 3 && d !== 13 ? "rd" : "th";
+  return `${d}${sufijo} day of ${MESES_EN[m - 1]}, ${a}`;
+}
+
+/** Datos derivados de los campos: ley y tribunales según la jurisdicción, fecha en inglés. */
+function valorDerivado(entrada: Entrada, key: string): string | null {
+  const j = JURISDICCIONES[(entrada.datos.jurisdiccion as Jurisdiccion) ?? "argentina_caba"] ?? JURISDICCIONES.argentina_caba;
+  switch (key) {
+    case "ley":
+      return j.ley;
+    case "ley_en":
+      return j.ley_en;
+    case "tribunales":
+      return j.tribunales;
+    case "tribunales_en":
+      return j.tribunales_en;
+    case "fecha_firma_en": {
+      const f = String(entrada.datos.fecha_firma ?? "");
+      return /^\d{4}-\d{2}-\d{2}$/.test(f) ? fechaFirmaEn(f) : "";
+    }
+    default:
+      return null;
+  }
+}
+
 function resolverToken(entrada: Entrada, key: string): Run {
+  if (key === "doc.sector_guion") {
+    // Título de la propuesta: «Propuesta de servicio - Sector Acceso» o sin sector.
+    const sector = String(entrada.datos.sector ?? "").trim();
+    return { texto: sector ? ` - ${sector}` : "" };
+  }
   if (key.startsWith("doc.")) {
+    const derivado = valorDerivado(entrada, key.slice(4));
+    if (derivado !== null) return derivado ? { texto: derivado } : { texto: `[falta: ${key.slice(4)}]`, falta: true };
     const r = valorCampo(entrada, key.slice(4));
     if (!r) return { texto: `[dato desconocido: ${key}]`, falta: true };
     if (!r.valor) return r.opcional ? { texto: "" } : { texto: `[falta: ${labelCampo(entrada, key.slice(4))}]`, falta: true };
@@ -196,14 +244,48 @@ function expandirBloque(entrada: Entrada, key: string): Bloque[] {
 
     case "bloque.firmas": {
       const firmantes: Firmante[] = entrada.tipo.firmantes ?? ["cliente", "estudio"];
-      const nombre = (f: Firmante) =>
-        f === "estudio"
-          ? ESTUDIO.nombre
-          : f === "cliente"
-            ? ctx.valores["cliente.nombre"] || "Comitente"
-            : String(entrada.datos.contraparte_nombre ?? "").trim() || "Contraparte";
-      const rol = (f: Firmante) => (f === "estudio" ? "Por el estudio" : f === "cliente" ? "Comitente" : "Contraparte");
-      return [{ t: "firmas", partes: firmantes.map((f) => ({ rol: rol(f), nombre: nombre(f) })) }];
+      const partes = firmantes.flatMap((f) => {
+        if (f === "estudio") {
+          // Cada profesional firma por el estudio.
+          return ctx.firmantesEstudio.map((p) => ({ rol: `${ctx.membrete.nombre}`, nombre: `${p.titulo} ${p.nombre}`.trim() }));
+        }
+        if (f === "cliente") return [{ rol: "Comitente", nombre: ctx.valores["cliente.nombre"] || "Comitente" }];
+        return [{ rol: "Contraparte", nombre: String(entrada.datos.contraparte_nombre ?? "").trim() || "Contraparte" }];
+      });
+      return [{ t: "firmas", partes }];
+    }
+
+    case "bloque.forma_pago":
+    case "bloque.forma_pago_en": {
+      const en = key.endsWith("_en");
+      const hitos = ((entrada.datos.hitos as ItemHito[]) ?? []).filter((h) => h.porcentaje || h.descripcion);
+      if (!hitos.length) return [faltaBloque("hitos de la forma de pago")];
+      const moneda = (entrada.datos.moneda as Moneda) || "ARS";
+      const total = parseMonto(String(entrada.datos.honorarios ?? entrada.datos.honorarios_estimados ?? ""));
+      const suma = hitos.reduce((a, h) => a + (parseMonto(h.porcentaje) ?? 0), 0);
+      const items: Run[][] = hitos.map((h) => {
+        const pct = parseMonto(h.porcentaje) ?? 0;
+        const desc = (en ? h.descripcion_en : h.descripcion)?.trim() || h.descripcion;
+        const monto = total !== null ? ` (${formatMonto((total * pct) / 100, moneda)})` : "";
+        return [{ texto: `${pct.toLocaleString("es-AR")}% ${desc}${monto}` }];
+      });
+      if (Math.round(suma) !== 100) items.push([{ texto: `[revisar: los porcentajes suman ${suma.toLocaleString("es-AR")}%]`, falta: true }]);
+      return [{ t: "lista", ordenada: false, items }];
+    }
+
+    case "bloque.etapas": {
+      const etapas = [...ctx.cronogramas.proyecto, ...ctx.cronogramas.obra];
+      if (!etapas.length) return [faltaBloque("cronogramas de la obra (pestaña Cronogramas)")];
+      const out: Bloque[] = [];
+      for (const e of etapas) {
+        const semanas = semanasDe(e.inicio, e.fin);
+        const meses = Math.round((semanas / 4.33) * 2) / 2;
+        const duracion = e.inicio === e.fin ? "" : ` · ${meses >= 1 ? `${meses.toLocaleString("es-AR")} ${meses === 1 ? "mes" : "meses"}` : `${semanas.toLocaleString("es-AR")} semanas`}`;
+        out.push({ t: "titulo", nivel: 3, runs: [{ texto: `${e.nombre}${duracion}` }] });
+        const lineas = (e.detalle ?? "").split("\n").map((l) => l.trim()).filter(Boolean);
+        if (lineas.length) out.push({ t: "lista", ordenada: false, items: lineas.map((l) => [{ texto: l }]) });
+      }
+      return out;
     }
 
     default:
@@ -211,11 +293,10 @@ function expandirBloque(entrada: Entrada, key: string): Bloque[] {
   }
 }
 
-/** Plantilla + datos → documento listo para mostrar o exportar. */
-export function resolverDocumento(entrada: Entrada): DocumentoResuelto {
+/** Convierte nodos del editor en bloques (se usa también dentro de las celdas de tablas). */
+function convertir(entrada: Entrada, nodos: JSONContent[] = []): Bloque[] {
   const bloques: Bloque[] = [];
-
-  for (const nodo of entrada.contenido.content ?? []) {
+  for (const nodo of nodos) {
     switch (nodo.type) {
       case "heading": {
         const runs = inline(entrada, nodo.content);
@@ -243,8 +324,32 @@ export function resolverDocumento(entrada: Entrada): DocumentoResuelto {
       case "horizontalRule":
         bloques.push({ t: "separador" });
         break;
+      case "table": {
+        const filas = (nodo.content ?? []).map((fila) => (fila.content ?? []).map((celda) => convertir(entrada, celda.content)));
+        // Contrato «solo español»: de cada fila queda la primera columna, como texto corrido,
+        // sin la fila que rotula los idiomas («Español | English»).
+        const esRotulo = (bs: Bloque[]) =>
+          bs.length === 1 && bs[0].t === "parrafo" && bs[0].runs.map((r) => r.texto).join("").trim().toLowerCase() === "español";
+        if (entrada.datos.idioma === "es") bloques.push(...filas.flatMap((f) => (f[0] && !esRotulo(f[0]) ? f[0] : [])));
+        else if (filas.length) bloques.push({ t: "columnas", filas });
+        break;
+      }
     }
   }
+  return bloques;
+}
 
+/** Plantilla + datos → documento listo para mostrar o exportar. */
+export function resolverDocumento(entrada: Entrada): DocumentoResuelto {
+  const bloques = convertir(entrada, entrada.contenido.content);
+  if (entrada.datos.caratula === true) {
+    const v = entrada.contexto.valores;
+    bloques.unshift({
+      t: "portada",
+      titulo: entrada.titulo,
+      subtitulo: [v["obra.titulo"], v["obra.ubicacion"]].filter(Boolean).join(" · "),
+    });
+    bloques.push({ t: "contratapa" });
+  }
   return { titulo: entrada.titulo, bloques };
 }

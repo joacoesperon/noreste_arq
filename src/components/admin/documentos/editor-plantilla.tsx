@@ -122,7 +122,7 @@ export function EditorPlantilla({
         />
         <div className="min-w-0 rounded-xl bg-muted/50 p-3 sm:p-6">
           <p className="mb-3 text-xs text-muted-foreground">Vista previa con una obra de ejemplo</p>
-          <VistaDocumento documento={vista} />
+          <VistaDocumento documento={vista} membrete={CONTEXTO_EJEMPLO.membrete} />
         </div>
       </div>
     </div>

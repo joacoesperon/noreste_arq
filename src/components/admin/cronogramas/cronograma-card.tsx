@@ -22,9 +22,10 @@ import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Gantt, type EtapaGantt } from "./gantt";
 
-type Fila = { key: string; id?: string; nombre: string; inicio: string; semanas: string; clave: boolean };
+type Fila = { key: string; id?: string; nombre: string; inicio: string; semanas: string; clave: boolean; detalle: string };
 
 let claveFila = 0;
 const nuevaClave = () => `f${++claveFila}`;
@@ -36,6 +37,7 @@ const aFila = (e: EtapaGantt): Fila => ({
   inicio: e.inicio,
   semanas: String(semanasDe(e.inicio, e.fin)).replace(".", ","),
   clave: e.clave,
+  detalle: e.detalle ?? "",
 });
 
 const numero = (v: string) => {
@@ -104,7 +106,7 @@ export function CronogramaCard({
   const agregar = () => {
     const ultima = filas.at(-1);
     const inicio = ultima ? sumarDias(finDe(ultima.inicio, numero(ultima.semanas) || 0), 1) : modelo.inicio;
-    setFilas((prev) => [...prev, { key: nuevaClave(), nombre: "", inicio, semanas: "2", clave: false }]);
+    setFilas((prev) => [...prev, { key: nuevaClave(), nombre: "", inicio, semanas: "2", clave: false, detalle: "" }]);
   };
 
   const guardar = () => {
@@ -117,6 +119,7 @@ export function CronogramaCard({
       inicio: f.inicio,
       fin: finDe(f.inicio, numero(f.semanas)),
       clave: f.clave,
+      detalle: f.detalle,
     }));
     startTransition(async () => {
       const res = await guardarCronograma(obraId, tipo, payload);
@@ -267,6 +270,19 @@ export function CronogramaCard({
                     <Input inputMode="decimal" value={f.semanas} onChange={(e) => set(f.key, "semanas", e.target.value)} aria-label="Semanas" />
                     <span className="text-xs text-muted-foreground">{fin ? fmt(fin) : "—"}</span>
                   </div>
+                  <details className="col-span-3 md:col-span-6 md:pl-[4.5rem]">
+                    <summary className="cursor-pointer text-xs text-muted-foreground hover:text-foreground">
+                      Qué incluye{f.detalle.trim() ? ` (${f.detalle.split("\n").filter((l) => l.trim()).length})` : ""}
+                    </summary>
+                    <Textarea
+                      value={f.detalle}
+                      onChange={(e) => set(f.key, "detalle", e.target.value)}
+                      rows={4}
+                      placeholder="Un ítem por línea. Sale en la propuesta (bloque «Etapas»)."
+                      className="mt-1 text-sm"
+                      aria-label="Qué incluye"
+                    />
+                  </details>
                 </div>
               );
             })}

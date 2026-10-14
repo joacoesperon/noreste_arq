@@ -14,14 +14,14 @@ import { TareasProvider } from "@/components/admin/tareas/tareas-context";
 
 export const metadata: Metadata = { title: "Tablero" };
 
-type Props = { searchParams: Promise<{ ver?: string }> };
+type Props = { searchParams: Promise<{ ver?: string; tarea?: string }> };
 
 const rangoFormat = new Intl.DateTimeFormat("es-AR", { day: "numeric", month: "long", timeZone: "UTC" });
 const rango = (desde: string, hasta: string) =>
   `${rangoFormat.format(new Date(`${desde}T00:00:00Z`))} al ${rangoFormat.format(new Date(`${hasta}T00:00:00Z`))}`;
 
 export default async function TableroPage({ searchParams }: Props) {
-  const { ver } = await searchParams;
+  const { ver, tarea } = await searchParams;
   const soloMias = ver !== "todas";
 
   const [staff, staffOptions, obras, abiertas] = await Promise.all([
@@ -52,7 +52,7 @@ export default async function TableroPage({ searchParams }: Props) {
   const nombre = staff!.nombre.split(" ")[0];
 
   return (
-    <TareasProvider yo={yo} staff={staffOptions} obras={obras}>
+    <TareasProvider yo={yo} staff={staffOptions} obras={obras} inicial={tarea && /^[0-9a-f-]{36}$/.test(tarea) ? tarea : null}>
       <div className="flex flex-col gap-8 p-6 md:p-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-col gap-1">

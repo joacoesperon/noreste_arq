@@ -1,5 +1,7 @@
-// Copia a public/visor/ los archivos que el visor IFC carga en tiempo de ejecución
-// (worker de fragments y WASM de web-ifc), con la versión instalada. Corre en postinstall.
+// Copia a public/ los archivos que se cargan en tiempo de ejecución, con la versión instalada.
+// Corre en postinstall.
+//   public/visor/: worker de fragments y WASM de web-ifc (visor IFC)
+//   public/vendor/: worker de pdf.js (importar listas de precios en PDF)
 import { copyFileSync, mkdirSync } from "node:fs";
 
 const destino = "public/visor";
@@ -12,4 +14,6 @@ for (const [origen, nombre] of [
 ]) {
   copyFileSync(origen, `${destino}/${nombre}`);
 }
-console.log("visor: worker y wasm copiados a public/visor");
+mkdirSync("public/vendor", { recursive: true });
+copyFileSync("node_modules/pdfjs-dist/build/pdf.worker.min.mjs", "public/vendor/pdf.worker.min.mjs");
+console.log("workers y wasm copiados a public/visor y public/vendor");
