@@ -1,26 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { authorizeApi } from "@/lib/auth";
 import crypto from "crypto";
 
 export async function GET(request: NextRequest) {
+  const { error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
-    // Validar autenticación
-    const cookieStore = await cookies();
-    const session = cookieStore.get("noreste_session");
-
-    console.log("🔐 Verificando autenticación:", {
-      hasCookie: !!session,
-      cookieValue: session?.value,
-      allCookies: cookieStore.getAll().map(c => c.name)
-    });
-
-    if (!session || session.value !== "active") {
-      console.log("❌ Autenticación falló");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    console.log("✅ Autenticación exitosa");
-
     // Obtener parámetros
     const { searchParams } = new URL(request.url);
     const folder = searchParams.get("folder");

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { supabase } from '@/lib/supabase';
+import { authorizeApi } from '@/lib/auth';
 import { clearProjectsCache } from '@/lib/projects';
 
 // Deshabilitar caché de rutas API
@@ -11,6 +11,9 @@ type RouteParams = { params: Promise<{ slug: string }> };
 
 // GET - Obtener un proyecto por slug desde Supabase
 export async function GET(request: NextRequest, { params }: RouteParams) {
+  const { supabase, error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
     const { slug } = await params;
     
@@ -37,6 +40,9 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
 // PUT - Actualizar proyecto en Supabase
 export async function PUT(request: NextRequest, { params }: RouteParams) {
+  const { supabase, error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
     const { slug } = await params;
     const updatedData = await request.json();
@@ -73,6 +79,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 // DELETE - Eliminar proyecto de Supabase
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const { supabase, error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
     const { slug } = await params;
     

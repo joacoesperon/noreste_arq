@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { supabase } from '@/lib/supabase';
+import { authorizeApi } from '@/lib/auth';
 import { deleteFromCloudinary } from '@/lib/cloudinary';
 import type { Project } from '@/lib/projects';
 
@@ -12,6 +12,9 @@ type RouteParams = { params: Promise<{ slug: string }> };
 
 // DELETE - Eliminar un archivo de Cloudinary y de Supabase
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  const { supabase, error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
     const { slug } = await params;
     const { searchParams } = new URL(request.url);

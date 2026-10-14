@@ -12,7 +12,7 @@ Noreste Arquitectura is a minimalist digital showcase designed for architectural
 
 - **Dynamic Showcase**: GSAP-powered interactive home feed with smooth scaling and motion detection.
 - **Masonry Gallery**: Elegant project layouts using `masonry-layout` and `Fancybox` for immersive image viewing.
-- **Admin Dashboard**: Full CRUD capabilities for project management, including secure login and drag-and-drop reordering.
+- **Studio Panel** (`/admin`): private panel for the studio with per-user login (Supabase Auth). Includes the website CRUD («sitio web») with drag-and-drop reordering. Built with shadcn/ui.
 - **Media Optimization**: Integrated with **Cloudinary** for professional-grade image/video hosting and **Next.js Image** component for performance.
 - **Real-time Data**: Powered by **Supabase** for a reliable and fast backend.
 - **Accessibility**: Support for reduced motion preferences and responsive design across all devices.
@@ -52,10 +52,14 @@ Noreste Arquitectura is a minimalist digital showcase designed for architectural
    CLOUDINARY_CLOUD_NAME=your_name
    CLOUDINARY_API_KEY=your_api_key
    CLOUDINARY_API_SECRET=your_secret
-   ADMIN_PASSWORD=your_password
    ```
 
-4. Run the development server:
+4. Set up the database and studio users (Supabase):
+   - Run `supabase/migrations/*.sql` in order in the Supabase SQL Editor.
+   - Authentication → Providers → Email: disable "Allow new users to sign up".
+   - Create each person in Authentication → Users, then add them to `public.staff` (example at the end of the migration).
+
+5. Run the development server:
    ```bash
    npm run dev
    ```

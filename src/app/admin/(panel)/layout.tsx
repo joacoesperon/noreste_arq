@@ -1,0 +1,27 @@
+import { getStaff } from "@/lib/auth";
+import { contarParaRevisar } from "@/lib/tareas/queries";
+import { AppSidebar } from "@/components/admin/app-sidebar";
+import { NoAccess } from "@/components/admin/no-access";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+
+export default async function PanelLayout({ children }: { children: React.ReactNode }) {
+  // El proxy ya exige sesión; acá se verifica que la cuenta sea del estudio.
+  const staff = await getStaff();
+  if (!staff) return <NoAccess />;
+  const paraRevisar = await contarParaRevisar(staff.id).catch(() => 0);
+
+  return (
+    <SidebarProvider>
+      <AppSidebar staff={staff} paraRevisar={paraRevisar} />
+      <SidebarInset>
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 md:hidden">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+          <span className="text-sm font-medium">noreste arq</span>
+        </header>
+        {children}
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}

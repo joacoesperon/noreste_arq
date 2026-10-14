@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { supabase } from '@/lib/supabase';
+import { authorizeApi } from '@/lib/auth';
 import { clearProjectsCache } from '@/lib/projects';
 
 // Deshabilitar caché de rutas API
@@ -9,6 +9,9 @@ export const revalidate = 0;
 
 // GET - Obtener todos los proyectos desde Supabase
 export async function GET() {
+  const { supabase, error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
     const { data, error } = await supabase
       .from('projects')
@@ -31,6 +34,9 @@ export async function GET() {
 
 // POST - Crear nuevo proyecto en Supabase
 export async function POST(request: NextRequest) {
+  const { supabase, error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
     const newProject = await request.json();
     
@@ -39,7 +45,7 @@ export async function POST(request: NextRequest) {
       .from('projects')
       .select('slug')
       .eq('slug', newProject.slug)
-      .single();
+      .maybeSingle();
 
     if (existing) {
       return NextResponse.json({ error: 'Ya existe un proyecto con ese slug' }, { status: 400 });
@@ -84,6 +90,9 @@ export async function POST(request: NextRequest) {
 
 // PUT - Actualizar el orden de los proyectos
 export async function PUT(request: NextRequest) {
+  const { supabase, error: authError } = await authorizeApi();
+  if (authError) return authError;
+
   try {
     const { projects } = await request.json();
     

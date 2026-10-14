@@ -49,3 +49,6 @@ todo.md
 .gemini/
 .github/
 gha-creds-*.json
+
+# visor IFC: se copia desde node_modules en postinstall
+/public/visor/
