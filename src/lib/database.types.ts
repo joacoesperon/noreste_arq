@@ -1479,6 +1479,7 @@ export type Database = {
       }
     }
     Functions: {
+      aplicar_solo_lectura: { Args: never; Returns: undefined }
       crear_version_documento: {
         Args: {
           p_bloques: Json
@@ -1498,6 +1499,7 @@ export type Database = {
         Returns: undefined
       }
       is_staff: { Args: never; Returns: boolean }
+      puede_editar: { Args: never; Returns: boolean }
       reemplazar_listas_obra: {
         Args: {
           p_colaboradores?: Json

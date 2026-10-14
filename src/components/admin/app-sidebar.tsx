@@ -165,14 +165,16 @@ export function AppSidebar({ staff, paraRevisar }: { staff: StaffUser; paraRevis
                 <DropdownMenuLabel className="font-normal">
                   <div className="grid text-sm leading-tight">
                     <span className="font-medium">{staff.nombre}</span>
-                    <span className="text-xs text-muted-foreground">{staff.rol}</span>
+                    <span className="text-xs text-muted-foreground">{staff.rol === "lectura" ? "solo lectura" : staff.rol}</span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setPasswordOpen(true)}>
-                  <KeyRound />
-                  Cambiar contraseña
-                </DropdownMenuItem>
+                {staff.rol !== "lectura" && (
+                  <DropdownMenuItem onSelect={() => setPasswordOpen(true)}>
+                    <KeyRound />
+                    Cambiar contraseña
+                  </DropdownMenuItem>
+                )}
                 <form action={signOut}>
                   <DropdownMenuItem asChild>
                     <button type="submit" className="w-full">

@@ -17,6 +17,7 @@ Requisitos del panel: `docs/alcance-panel-estudio.pdf` y `docs/Noreste_Modificac
 - `src/proxy.ts` exige sesión en `/admin/*` y `/api/*`. Las API usan `authorizeApi()` (`src/lib/auth.ts`), que además verifica staff.
 - En el panel y las API usar `createClient()` de `src/lib/supabase/server.ts` (sesión del usuario, pasa por RLS). El cliente anónimo `src/lib/supabase.ts` es solo para lecturas del sitio público.
 - Toda tabla nueva: RLS activado con políticas `public.is_staff()`. Migraciones en `supabase/migrations/`.
+- Usuarios de solo lectura (`staff.rol = 'lectura'`, para demostraciones; se crean con `crear-usuario.mjs … lectura`): la base les rechaza toda escritura (trigger `solo_lectura` + políticas restrictivas, `puede_editar()`). **Toda tabla nueva: terminar la migración con `select public.aplicar_solo_lectura();`**. En las API, `authorizeApi()` los rechaza salvo `{ lectura: true }` (solo en GET).
 - No usar la service role salvo del lado del servidor y cuando RLS no alcance.
 - Desarrollo usa el Supabase propio `noreste-dev` (`.env.local`, CLI enlazada). Tras cada migración: `npx supabase db push` y regenerar tipos con `npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts`.
 - Producción: Supabase `aqfbxebcyifaerlripgj` (Vercel Production). Las migraciones nuevas se aplican con `python3 scripts/aplicar-migraciones.py aqfbxebcyifaerlripgj` (API de administración, sin contraseña; saltea lo ya aplicado) y los usuarios se crean con `scripts/crear-usuario.mjs`.

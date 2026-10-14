@@ -79,6 +79,7 @@ export async function listStaffOptions(): Promise<StaffOption[]> {
     .from("staff")
     .select("id, nombre")
     .eq("activo", true)
+    .neq("rol", "lectura")
     .order("nombre");
   if (error) throw error;
   return data;

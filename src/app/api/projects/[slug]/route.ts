@@ -10,7 +10,7 @@ type RouteParams = { params: Promise<{ slug: string }> };
 
 // GET - Obtener un proyecto por slug desde Supabase
 export async function GET(request: NextRequest, { params }: RouteParams) {
-  const { supabase, error: authError } = await authorizeApi();
+  const { supabase, error: authError } = await authorizeApi({ lectura: true });
   if (authError) return authError;
 
   try {

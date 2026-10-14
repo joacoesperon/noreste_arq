@@ -10,7 +10,8 @@ export type StaffUser = {
   nombre: string;
   /** Correo de contacto (notificaciones); puede faltar. */
   email: string | null;
-  rol: "admin" | "miembro";
+  /** "lectura": solo puede ver (demostraciones). La base rechaza sus cambios. */
+  rol: "admin" | "miembro" | "lectura";
 };
 
 async function fetchStaff(supabase: ServerClient) {
@@ -39,9 +40,10 @@ export const getStaff = cache(async (): Promise<StaffUser | null> => {
 
 /**
  * Para route handlers: devuelve el cliente con la sesión del usuario si es del
- * estudio, o una respuesta 401/403 lista para retornar.
+ * estudio, o una respuesta 401/403 lista para retornar. Los usuarios de solo
+ * lectura solo pasan si la ruta lo permite (`{ lectura: true }`, para los GET).
  */
-export async function authorizeApi() {
+export async function authorizeApi(opciones: { lectura?: boolean } = {}) {
   const supabase = await createClient();
   const { hasSession, staff } = await fetchStaff(supabase);
 
@@ -49,6 +51,10 @@ export async function authorizeApi() {
     const error = hasSession
       ? NextResponse.json({ error: "Sin acceso al panel" }, { status: 403 })
       : NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    return { supabase, staff: null, error } as const;
+  }
+  if (staff.rol === "lectura" && !opciones.lectura) {
+    const error = NextResponse.json({ error: "Usuario de solo lectura" }, { status: 403 });
     return { supabase, staff: null, error } as const;
   }
 

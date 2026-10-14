@@ -66,6 +66,7 @@ export async function changePassword(
 
   const staff = await getStaff();
   if (!staff) return { ok: false, error: "Tu sesión venció. Volvé a ingresar." };
+  if (staff.rol === "lectura") return { ok: false, error: "Este usuario es de solo lectura." };
 
   const supabase = await createClient();
 

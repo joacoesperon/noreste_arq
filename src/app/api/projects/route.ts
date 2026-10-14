@@ -8,7 +8,7 @@ export const revalidate = 0;
 
 // GET - Obtener todos los proyectos desde Supabase
 export async function GET() {
-  const { supabase, error: authError } = await authorizeApi();
+  const { supabase, error: authError } = await authorizeApi({ lectura: true });
   if (authError) return authError;
 
   try {
