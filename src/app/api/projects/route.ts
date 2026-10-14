@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { authorizeApi } from '@/lib/auth';
-import { clearProjectsCache } from '@/lib/projects';
 
 // Deshabilitar caché de rutas API
 export const dynamic = 'force-dynamic';
@@ -75,7 +74,6 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
     
-    clearProjectsCache();
     revalidatePath(`/projects/${data.slug}`);
     revalidatePath('/');
     revalidatePath('/indice');
@@ -119,7 +117,6 @@ export async function PUT(request: NextRequest) {
 
     if (error) throw error;
     
-    clearProjectsCache();
     revalidatePath('/');
     revalidatePath('/indice');
     revalidatePath('/info');

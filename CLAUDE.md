@@ -1,7 +1,7 @@
 # Noreste Arq
 
 Portfolio público de norestearq.com + panel privado del estudio en `/admin`.
-Requisitos del panel: `alcance-panel-estudio.pdf` y `Noreste_Modificaciones_Web_v1.pdf` (raíz). Se entrega por etapas (0 base/seguridad, 1 obras, 2 documentos, 3 archivos y tablero, 4 presupuestador).
+Requisitos del panel: `docs/alcance-panel-estudio.pdf` y `docs/Noreste_Modificaciones_Web_v1.pdf`; lo que falta pedirle al estudio, en `docs/pedidos-al-estudio.md`. Se entrega por etapas (0 base/seguridad, 1 obras, 2 documentos, 3 archivos y tablero, 4 presupuestador).
 
 ## Estructura
 
@@ -16,10 +16,10 @@ Requisitos del panel: `alcance-panel-estudio.pdf` y `Noreste_Modificaciones_Web_
 - Supabase Auth, un usuario por persona. Acceso al panel = fila activa en `public.staff`.
 - `src/proxy.ts` exige sesión en `/admin/*` y `/api/*`. Las API usan `authorizeApi()` (`src/lib/auth.ts`), que además verifica staff.
 - En el panel y las API usar `createClient()` de `src/lib/supabase/server.ts` (sesión del usuario, pasa por RLS). El cliente anónimo `src/lib/supabase.ts` es solo para lecturas del sitio público.
-- Toda tabla nueva: RLS activado con políticas `public.is_staff()`. Migraciones en `supabase/migrations/` (se ejecutan a mano en el SQL Editor).
+- Toda tabla nueva: RLS activado con políticas `public.is_staff()`. Migraciones en `supabase/migrations/`.
 - No usar la service role salvo del lado del servidor y cuando RLS no alcance.
 - Desarrollo usa el Supabase propio `noreste-dev` (`.env.local`, CLI enlazada). Tras cada migración: `npx supabase db push` y regenerar tipos con `npx supabase gen types typescript --linked --schema public > src/lib/database.types.ts`.
-- Pasos para llevar todo a producción: `docs/pendientes-produccion.md`.
+- Producción: Supabase `aqfbxebcyifaerlripgj` (Vercel Production). Las migraciones nuevas se aplican con `python3 scripts/aplicar-migraciones.py aqfbxebcyifaerlripgj` (API de administración, sin contraseña; saltea lo ya aplicado) y los usuarios se crean con `scripts/crear-usuario.mjs`.
 
 ## Obras (etapa 1)
 

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { authorizeApi } from '@/lib/auth';
-import { clearProjectsCache } from '@/lib/projects';
 
 // Deshabilitar caché de rutas API
 export const dynamic = 'force-dynamic';
@@ -63,7 +62,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: updateError.message }, { status: 400 });
     }
     
-    clearProjectsCache();
     revalidatePath(`/projects/${slug}`);
     revalidatePath('/');
     revalidatePath('/indice');
@@ -97,7 +95,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: deleteError.message }, { status: 400 });
     }
     
-    clearProjectsCache();
     revalidatePath(`/projects/${slug}`);
     revalidatePath('/');
     revalidatePath('/indice');

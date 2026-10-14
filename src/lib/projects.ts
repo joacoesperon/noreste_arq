@@ -29,32 +29,6 @@ export type Project = {
 };
 
 /**
- * Obtener todos los proyectos desde Supabase
- */
-export async function getProjects(): Promise<Project[]> {
-  noStore(); // Deshabilitar caché de Next.js
-  
-  const { data, error } = await supabase
-    .from('projects')
-    .select('*')
-    .order('order', { ascending: true });
-
-  if (error) {
-    console.error("Error fetching projects from Supabase:", error);
-    return [];
-  }
-
-  return data as Project[];
-}
-
-/**
- * Limpiar caché (En Supabase/Vercel usaremos revalidatePath de Next.js si es necesario)
- */
-export function clearProjectsCache() {
-  // En Serverless no usamos cache global manual, confiamos en el Data Cache de Next.js
-}
-
-/**
  * Obtener proyectos visibles (para la web pública)
  */
 export async function getVisibleProjects(): Promise<Project[]> {
@@ -92,33 +66,6 @@ export async function getProjectsSortedByYear(): Promise<Project[]> {
   }
 
   return data as Project[];
-}
-
-/**
- * Obtener proyectos en orden pseudo-aleatorio consistente
- */
-export async function getProjectsShuffled(): Promise<Project[]> {
-  const projects = await getVisibleProjects();
-  
-  const hashString = (str: string): number => {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-    }
-    return Math.abs(hash);
-  };
-
-  const seed = hashString(projects.map(p => p.slug).join(''));
-  
-  const shuffled = [...projects];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = (seed + i * 31) % (i + 1);
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  
-  return shuffled;
 }
 
 /**

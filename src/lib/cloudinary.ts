@@ -10,25 +10,6 @@ cloudinary.config({
 export default cloudinary;
 
 /**
- * Helper para subir una imagen a Cloudinary desde un buffer o base64
- */
-export async function uploadToCloudinary(fileUri: string, folder: string) {
-  try {
-    const result = await cloudinary.uploader.upload(fileUri, {
-      folder: `noreste-arq/${folder}`,
-      resource_type: 'auto', // Detecta si es imagen o video
-    });
-    return {
-      url: result.secure_url,
-      public_id: result.public_id,
-    };
-  } catch (error) {
-    console.error('Error uploading to Cloudinary:', error);
-    throw error;
-  }
-}
-
-/**
  * Helper para eliminar un recurso de Cloudinary
  */
 export async function deleteFromCloudinary(publicId: string) {
