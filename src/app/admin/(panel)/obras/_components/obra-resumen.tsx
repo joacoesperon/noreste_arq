@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Pencil } from "lucide-react";
+import { proyectoDeTerceros } from "@/lib/obras/constants";
 import type { ObraCompleta, StaffOption } from "@/lib/obras/queries";
 import { formatFecha, finEstimado, formatMeses } from "@/lib/obras/format";
 import { formatM2, totalesSuperficie } from "@/lib/obras/superficies";
@@ -129,6 +130,7 @@ export function ObraResumen({ obra, staff }: { obra: ObraCompleta; staff: StaffO
           </Campo>
           <dl className="grid gap-4 sm:grid-cols-2">
             <Campo label="Proyecto">
+              {proyectoDeTerceros(obra.servicios) && "De otro estudio"}
               {(obra.proyecto_inicio || obra.proyecto_duracion_meses) &&
                 [formatFecha(obra.proyecto_inicio), formatMeses(obra.proyecto_duracion_meses)]
                   .filter(Boolean)

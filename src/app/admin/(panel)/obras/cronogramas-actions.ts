@@ -65,3 +65,25 @@ export async function eliminarCronograma(obraId: string, tipo: string): Promise<
   revalidatePath("/admin", "layout");
   return { ok: true };
 }
+
+const itemSchema = z.object({ etapaId: z.uuid(), item: z.string().trim().min(1).max(5000), hecho: z.boolean() });
+
+/** Tilda o destilda un ítem de «qué incluye» de una etapa (avance del cronograma). */
+export async function marcarItemEtapa(payload: unknown): Promise<Resultado> {
+  if (!(await getStaff())) return { ok: false, error: "Tu sesión venció." };
+  const p = itemSchema.safeParse(payload);
+  if (!p.success) return { ok: false, error: "Datos inválidos." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("marcar_item_etapa", {
+    p_etapa_id: p.data.etapaId,
+    p_item: p.data.item,
+    p_hecho: p.data.hecho,
+  });
+  if (error) {
+    console.error("marcarItemEtapa", error);
+    return { ok: false, error: "No se pudo guardar el avance." };
+  }
+  revalidatePath("/admin/obras", "layout");
+  return { ok: true };
+}

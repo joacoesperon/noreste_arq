@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { ArrowDown, ArrowUp, CalendarRange, Diamond, Pencil, Plus, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { eliminarCronograma, guardarCronograma } from "@/app/admin/(panel)/obras/cronogramas-actions";
+import { avanceCronograma } from "@/lib/cronogramas/avance";
 import { diasEntre, finDe, semanasDe, sumarDias } from "@/lib/cronogramas/fechas";
 import { generarCronograma, type DatosModelo, type TipoCronograma } from "@/lib/cronogramas/modelos";
 import {
@@ -23,6 +24,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ChecklistEtapas } from "./checklist-etapas";
 import { Gantt, type EtapaGantt } from "./gantt";
 
 type Fila = { key: string; id?: string; nombre: string; inicio: string; semanas: string; clave: boolean; detalle: string };
@@ -69,8 +71,14 @@ export function CronogramaCard({
   const [inicioGeneral, setInicioGeneral] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  // Ítems tildados por etapa (se actualizan al tildar, sin esperar al servidor).
+  const [completados, setCompletados] = useState<Record<string, string[]>>(() =>
+    Object.fromEntries(etapas.filter((e) => e.id).map((e) => [e.id, e.completados ?? []]))
+  );
 
   const existe = etapas.length > 0;
+  const guardadas = etapas.map((e) => (e.id ? { ...e, completados: completados[e.id] ?? [] } : e));
+  const avance = avanceCronograma(guardadas);
   const desde = existe ? etapas.reduce((m, e) => (e.inicio < m ? e.inicio : m), etapas[0].inicio) : null;
   const hasta = existe ? etapas.reduce((m, e) => (e.fin > m ? e.fin : m), etapas[0].fin) : null;
 
@@ -133,7 +141,7 @@ export function CronogramaCard({
     ? filas
         .filter((f) => f.inicio && !Number.isNaN(numero(f.semanas)))
         .map((f) => ({ id: f.key, nombre: f.nombre || "—", inicio: f.inicio, fin: finDe(f.inicio, numero(f.semanas)), clave: f.clave }))
-    : etapas;
+    : guardadas;
 
   return (
     <Card>
@@ -141,7 +149,7 @@ export function CronogramaCard({
         <CardTitle>{TITULOS[tipo]}</CardTitle>
         <CardDescription>
           {existe && desde && hasta
-            ? `${fmt(desde)} → ${fmt(hasta)} · ${Math.round(diasEntre(desde, hasta) / 30.4)} meses`
+            ? `${fmt(desde)} → ${fmt(hasta)} · ${Math.round(diasEntre(desde, hasta) / 30.4)} meses${avance !== null ? ` · ${avance} % hecho` : ""}`
             : "Todavía no hay cronograma."}
         </CardDescription>
         {!editando && (
@@ -202,6 +210,14 @@ export function CronogramaCard({
         )}
 
         {vista.length > 0 && <Gantt etapas={vista} hoy={hoy} />}
+
+        {!editando && (
+          <ChecklistEtapas
+            etapas={guardadas}
+            completados={completados}
+            onChange={(id, items) => setCompletados((prev) => ({ ...prev, [id]: items }))}
+          />
+        )}
 
         {editando && (
           <div className="flex flex-col gap-4 border-t pt-4">

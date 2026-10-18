@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
-import { ExternalLink, Globe, Link2, Loader2, Pencil, Plus, Search, Tag, Trash2, X } from "lucide-react";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { ExternalLink, Globe, Loader2, Pencil, Plus, Search, Tag, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import {
   buscarEnWeb,
@@ -15,6 +15,7 @@ import {
 import { formatFechaCorta, formatMonto, parseNumero, type Moneda } from "@/lib/documentos/formato";
 import { RUBROS, TIPOS_MATERIAL, UNIDADES } from "@/lib/presupuestador/constants";
 import type { Material, PrecioVigente, Proveedor } from "@/lib/presupuestador/queries";
+import type { ProductoWeb } from "@/lib/presupuestador/vtex";
 import { hoyAR } from "@/lib/tareas/semanas";
 import {
   AlertDialog,
@@ -41,8 +42,21 @@ const TODOS = "__todos";
 
 export type VinculoWeb = { id: string; material_id: string; proveedor_id: string; nombre: string; url: string | null; ultimo_error: string | null };
 
-/** Buscar el material en las tiendas online de los proveedores y vincularlo (precio web semanal). */
-function BuscarEnWeb({ material, vinculos, proveedores }: { material: Material; vinculos: VinculoWeb[]; proveedores: Proveedor[] }) {
+/** Producto de una tienda elegido para cargar su precio (y, si se quiere, vincularlo). */
+type ElegidoWeb = { proveedor_id: string; producto: ProductoWeb };
+
+/** Buscar el material en las tiendas online de los proveedores; el elegido completa el formulario de precio. */
+function BuscarEnWeb({
+  material,
+  vinculos,
+  proveedores,
+  onUsar,
+}: {
+  material: Material;
+  vinculos: VinculoWeb[];
+  proveedores: Proveedor[];
+  onUsar: (elegido: ElegidoWeb) => void;
+}) {
   const [texto, setTexto] = useState(material.nombre);
   const [resultados, setResultados] = useState<ResultadoWeb[] | null>(null);
   const [pending, startTransition] = useTransition();
@@ -116,21 +130,9 @@ function BuscarEnWeb({ material, vinculos, proveedores }: { material: Material; 
                     {!prod.disponible && " · sin stock"}
                   </span>
                 </span>
-                <Button
-                  size="xs"
-                  variant="outline"
-                  disabled={pending}
-                  onClick={() =>
-                    startTransition(async () => {
-                      const res = await vincularProductoWeb({ material_id: material.id, proveedor_id: r.proveedor_id, producto_id: prod.producto_id });
-                      if (!res.ok) return void toast.error(res.error);
-                      toast.success("Vinculado: el precio se actualiza solo cada semana");
-                      setResultados(null);
-                    })
-                  }
-                >
-                  <Link2 />
-                  Vincular
+                <Button size="xs" variant="outline" disabled={pending} onClick={() => onUsar({ proveedor_id: r.proveedor_id, producto: prod })}>
+                  <Tag />
+                  Usar precio
                 </Button>
               </li>
             ))}
@@ -294,9 +296,31 @@ function PreciosDialog({
   const [moneda, setMoneda] = useState<Moneda>("ARS");
   const [fecha, setFecha] = useState(hoyAR());
   const [referencia, setReferencia] = useState("");
+  const [web, setWeb] = useState<ElegidoWeb | null>(null);
+  const [semanal, setSemanal] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const form = useRef<HTMLFormElement>(null);
   const nombre = (id: string) => proveedores.find((p) => p.id === id)?.nombre ?? "—";
+  // Con «actualizar cada semana» el precio es el de la tienda: se vuelve a leer al guardar.
+  const vincular = !!web && semanal;
+
+  const usarWeb = (elegido: ElegidoWeb) => {
+    setWeb(elegido);
+    setSemanal(true);
+    setProveedor(elegido.proveedor_id);
+    setPrecio(String(elegido.producto.precio).replace(".", ","));
+    setMoneda("ARS");
+    setFecha(hoyAR());
+    setReferencia(elegido.producto.url ?? "");
+    setError(null);
+    form.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  const soltarWeb = () => {
+    setWeb(null);
+    setReferencia("");
+  };
 
   return (
     <Dialog open onOpenChange={onOpenChange}>
@@ -329,31 +353,54 @@ function PreciosDialog({
         )}
 
         {proveedores.some((p) => p.web_plataforma) && (
-          <BuscarEnWeb material={material} vinculos={vinculos} proveedores={proveedores} />
+          <BuscarEnWeb material={material} vinculos={vinculos} proveedores={proveedores} onUsar={usarWeb} />
         )}
 
         <form
+          ref={form}
           className="grid gap-3 border-t pt-4 sm:grid-cols-2"
           onSubmit={(e) => {
             e.preventDefault();
             const n = parseNumero(precio);
             startTransition(async () => {
-              const res = await cargarPrecio({
-                material_id: material.id,
-                proveedor_id: proveedor || undefined,
-                precio: n ?? undefined,
-                moneda,
-                fecha,
-                referencia,
-              });
+              const res =
+                web && semanal
+                  ? await vincularProductoWeb({ material_id: material.id, proveedor_id: web.proveedor_id, producto_id: web.producto.producto_id })
+                  : await cargarPrecio({
+                      material_id: material.id,
+                      proveedor_id: proveedor || undefined,
+                      precio: n ?? undefined,
+                      moneda,
+                      fecha,
+                      referencia,
+                    });
               if (!res.ok) return setError(res.error);
-              toast.success("Precio cargado");
+              toast.success(vincular ? "Precio cargado: se actualiza solo cada semana" : "Precio cargado");
               onOpenChange(false);
             });
           }}
         >
-          <p className="text-sm font-medium sm:col-span-2">Cargar un precio a mano</p>
-          <Select value={proveedor} onValueChange={setProveedor}>
+          <p className="text-sm font-medium sm:col-span-2">{web ? "Cargar el precio de la tienda" : "Cargar un precio a mano"}</p>
+          {web && (
+            <div className="flex flex-col gap-2 rounded-md bg-muted/50 p-2 text-sm sm:col-span-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate">
+                  <Globe className="mr-1 inline size-3.5" />
+                  {web.producto.nombre}
+                </span>
+                <Button type="button" variant="ghost" size="icon-xs" onClick={soltarWeb} aria-label="Cargar a mano">
+                  <X />
+                </Button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Checkbox id="precio-semanal" checked={semanal} onCheckedChange={(v) => setSemanal(v === true)} />
+                <Label htmlFor="precio-semanal" className="font-normal">
+                  Actualizar este precio solo cada semana desde la tienda
+                </Label>
+              </div>
+            </div>
+          )}
+          <Select value={proveedor} onValueChange={setProveedor} disabled={vincular}>
             <SelectTrigger className="w-full sm:col-span-2" aria-label="Proveedor">
               <SelectValue placeholder={proveedores.length ? "Proveedor" : "Primero cargá un proveedor"} />
             </SelectTrigger>
@@ -365,8 +412,15 @@ function PreciosDialog({
               ))}
             </SelectContent>
           </Select>
-          <Input value={precio} onChange={(e) => setPrecio(e.target.value)} placeholder={`Precio por ${material.unidad}`} inputMode="decimal" aria-label="Precio" />
-          <Select value={moneda} onValueChange={(v) => setMoneda(v as Moneda)}>
+          <Input
+            value={precio}
+            onChange={(e) => setPrecio(e.target.value)}
+            placeholder={`Precio por ${material.unidad}`}
+            inputMode="decimal"
+            aria-label="Precio"
+            disabled={vincular}
+          />
+          <Select value={moneda} onValueChange={(v) => setMoneda(v as Moneda)} disabled={vincular}>
             <SelectTrigger className="w-full" aria-label="Moneda">
               <SelectValue />
             </SelectTrigger>
@@ -375,8 +429,14 @@ function PreciosDialog({
               <SelectItem value="USD">Dólares</SelectItem>
             </SelectContent>
           </Select>
-          <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} aria-label="Fecha" />
-          <Input value={referencia} onChange={(e) => setReferencia(e.target.value)} placeholder="Referencia (opcional)" aria-label="Referencia" />
+          <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} aria-label="Fecha" disabled={vincular} />
+          <Input
+            value={referencia}
+            onChange={(e) => setReferencia(e.target.value)}
+            placeholder="Referencia (opcional)"
+            aria-label="Referencia"
+            disabled={vincular}
+          />
           {error && (
             <p role="alert" className="text-sm text-destructive sm:col-span-2">
               {error}

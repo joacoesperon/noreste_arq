@@ -8,8 +8,10 @@ import { proximoLunes, sumarDias } from "@/lib/cronogramas/fechas";
 import { getCronogramas, type Cronograma } from "@/lib/cronogramas/queries";
 import { listDocumentos } from "@/lib/documentos/queries";
 import { listGastosObra } from "@/lib/gastos/queries";
+import { createClient } from "@/lib/supabase/server";
 import { listPresupuestos } from "@/lib/presupuestador/queries";
 import type { TipoCronograma } from "@/lib/cronogramas/modelos";
+import { proyectoDeTerceros } from "@/lib/obras/constants";
 import { getObra, listStaffOptions } from "@/lib/obras/queries";
 import { listObrasOpciones, listTareasObra } from "@/lib/tareas/queries";
 import { hoyAR } from "@/lib/tareas/semanas";
@@ -23,6 +25,7 @@ import { GastosObra } from "@/components/admin/gastos/gastos-obra";
 import { PresupuestosObra } from "@/components/admin/presupuestador/presupuestos-obra";
 import { TareasProvider } from "@/components/admin/tareas/tareas-context";
 import { ArchivosObra } from "../_components/archivos-obra";
+import { CompartirObra } from "../_components/compartir-obra";
 import { EstadoBadge } from "../_components/estado-badge";
 import { EliminarObra } from "../_components/eliminar-obra";
 import { ObraResumen } from "../_components/obra-resumen";
@@ -41,7 +44,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ObraPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const [obra, staff, yo, tareas, archivos, obrasOpciones, cronogramas, documentos, presupuestos, gastos] = await Promise.all([
+  const supabase = await createClient();
+  const [obra, staff, yo, tareas, archivos, obrasOpciones, cronogramas, documentos, presupuestos, gastos, { data: links }] = await Promise.all([
     getObra(id).catch(() => null),
     listStaffOptions(),
     getStaff(),
@@ -52,6 +56,7 @@ export default async function ObraPage({ params, searchParams }: Props) {
     listDocumentos(id).catch(() => []),
     listPresupuestos(id).catch(() => []),
     listGastosObra(id).catch(() => ({ gastos: [], gremios: [] })),
+    supabase.from("obra_links").select("id, token, expires_at").eq("obra_id", id).order("created_at"),
   ]);
   if (!obra) notFound();
 
@@ -92,7 +97,10 @@ export default async function ObraPage({ params, searchParams }: Props) {
               <EstadoBadge estado={obra.estado} />
             </div>
           </div>
-          <EliminarObra obraId={obra.id} titulo={obra.titulo} />
+          <div className="flex items-center gap-2">
+            <CompartirObra obraId={obra.id} links={links ?? []} />
+            <EliminarObra obraId={obra.id} titulo={obra.titulo} />
+          </div>
         </div>
       </div>
 
@@ -140,14 +148,16 @@ export default async function ObraPage({ params, searchParams }: Props) {
             <TareasObra obraId={obra.id} tareas={tareas} hoy={hoy} />
           </TabsContent>
           <TabsContent value="cronogramas" className="mt-4 flex flex-col gap-4">
-            <CronogramaCard
-              key={`proyecto-${cronogramas.proyecto?.updated_at ?? "nuevo"}`}
-              obraId={obra.id}
-              tipo="proyecto"
-              etapas={cronogramas.proyecto?.etapas ?? []}
-              modelo={modeloProyecto}
-              hoy={hoy}
-            />
+            {(!proyectoDeTerceros(obra.servicios) || cronogramas.proyecto) && (
+              <CronogramaCard
+                key={`proyecto-${cronogramas.proyecto?.updated_at ?? "nuevo"}`}
+                obraId={obra.id}
+                tipo="proyecto"
+                etapas={cronogramas.proyecto?.etapas ?? []}
+                modelo={modeloProyecto}
+                hoy={hoy}
+              />
+            )}
             <CronogramaCard
               key={`obra-${cronogramas.obra?.updated_at ?? "nuevo"}`}
               obraId={obra.id}

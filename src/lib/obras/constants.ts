@@ -27,6 +27,16 @@ export const SERVICIOS = [
   "Desarrollo comercial de proyecto",
 ] as const;
 
+/**
+ * El proyecto lo hizo otro estudio: se contrató solo la obra (dirección o administración)
+ * sin anteproyecto ni proyecto ejecutivo. No lleva fechas ni cronograma de proyecto.
+ */
+export function proyectoDeTerceros(servicios: readonly string[]) {
+  const proyecto = servicios.includes("Anteproyecto") || servicios.includes("Proyecto ejecutivo");
+  const obra = servicios.includes("Dirección de obra") || servicios.includes("Administración de obra");
+  return obra && !proyecto;
+}
+
 export const ESTADOS = [
   { value: "propuesta", label: "Propuesta" },
   { value: "en_proyecto", label: "En proyecto" },

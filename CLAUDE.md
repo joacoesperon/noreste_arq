@@ -34,6 +34,8 @@ Requisitos del panel: `docs/alcance-panel-estudio.pdf` y `docs/Noreste_Modificac
 - `cronogramas` (uno de proyecto y uno de obra por obra) + `cronograma_etapas` (inicio/fin, `clave`). Se guardan con la función `guardar_cronograma` (atómica), que además crea/mueve/borra la tarea de cada fecha clave (`tareas.cronograma_etapa_id`).
 - Modelo inicial en `src/lib/cronogramas/modelos.ts`: etapas y «qué incluye» del cronograma real de Casa Tots (anteproyecto, proyecto, obra húmeda, terminaciones, equipamiento fijo, semicubiertos), escaladas por m², tipología y plazos de la obra. Cada etapa tiene `detalle` (una línea por ítem).
 - UI: pestaña «Cronogramas» de la ficha (`src/components/admin/cronogramas/`: Gantt por mes + editor en tabla).
+- Avance: cada línea del `detalle` es un ítem que se tilda en la ficha (`cronograma_etapas.completados`, textos tildados; función `marcar_item_etapa`). % de etapa = tildados / ítems (todos valen igual); % del cronograma pesado por duración (`src/lib/cronogramas/avance.ts`). Editar el texto de una línea la destilda.
+- Proyecto de terceros (`proyectoDeTerceros` en `obras/constants.ts`): servicios de obra sin Anteproyecto ni Proyecto ejecutivo → sin fechas ni cronograma de proyecto.
 
 ## Documentos (etapa 2)
 
@@ -54,6 +56,7 @@ Requisitos del panel: `docs/alcance-panel-estudio.pdf` y `docs/Noreste_Modificac
 - Archivos: bucket privado `obra-archivos` + tabla `archivos`. Se suben desde el navegador (`src/lib/supabase/client.ts`) y se registran con `registrarArchivo`; se descargan con links firmados cortos.
 - Visor IFC: That Open Engine (`src/components/visor/visor-ifc.tsx`). Worker y WASM se copian a `public/visor/` en `postinstall`. **web-ifc fijado en 0.0.77**: el paquete 0.0.78 trae el JS y el WASM desincronizados. Links para clientes: `visor_links` (`expires_at` null = sin vencimiento); la página pública `src/app/visor/[token]` (root layout propio) busca el link y genera un acceso de 1 hora al archivo en cada visita con la service role (`src/lib/supabase/admin.ts`, env `SUPABASE_SERVICE_ROLE_KEY`, solo servidor). Revocar = borrar la fila, corta el acceso en el acto.
 - El correo diario y el reporte semanal a clientes quedan para después de terminar el sistema.
+- Portal del cliente: `obra_links` (un link por obra, `expires_at` null = sin vencimiento), botón «Compartir con el cliente» en la ficha. Página pública `src/app/cliente/[token]` (root layout propio); los datos los arma `src/lib/portal/datos.ts` con la service role y eligen qué ve el cliente: resumen, cronogramas con avance, gastos previstos (`pagado = false`) de las próximas 8 semanas, IFC de «Modelos 3D» y PDF/imágenes de «Planos» (panel lateral del visor). Todo de solo lectura.
 
 ## Gastos de obra
 
@@ -72,6 +75,12 @@ Requisitos del panel: `docs/alcance-panel-estudio.pdf` y `docs/Noreste_Modificac
 - Precios web: proveedores con `web_dominio` (tiendas VTEX: Easy, Prestigio). En cada material «Buscar en la web» → vincular producto (`material_productos_web`); cron semanal `/api/cron/precios` actualiza. Solo se consultan dominios cargados en un proveedor (`src/lib/presupuestador/vtex.ts`).
 - Índice CAC: tabla `indices_cac` (carga mensual a mano en Presupuestador → Índice CAC); el presupuesto se actualiza desde su mes base (`cac_base`).
 - Recordatorio mensual a proveedores: cron `/api/cron/recordatorios` (correo + tarea con botones de WhatsApp `wa.me`).
+- Lectura con IA (`src/lib/presupuestador/ia.ts`, Claude Opus 5.5 con salida estructurada, env `ANTHROPIC_API_KEY`): separa productos y presentaciones de listas desprolijas y propone el material del catálogo (referencias M1…Mn, nunca ids). Las equivalencias ya guardadas mandan sobre la sugerencia. Los materiales nuevos usan `nombre_catalogo`, unidad y rubro propuestos.
+- En el diálogo de precios de un material, «Usar precio» de un resultado web completa el formulario; con «actualizar cada semana» se vincula (`vincularProductoWeb`, el precio se relee en el servidor).
+
+## Sitio público: «Cotizá tu proyecto»
+
+- Botón fijo en la home (`src/components/CotizaProyecto.tsx`): preguntas en `src/lib/consultas/preguntas.ts`, termina en WhatsApp con Josefina (teléfono de Datos del estudio, `src/lib/consultas/telefono.ts`). La consulta se guarda en `consultas_web` (server action `src/app/(site)/actions.ts`, service role) y se ve en el panel → Consultas.
 
 ## Correos y tareas programadas
 

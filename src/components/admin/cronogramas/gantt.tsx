@@ -1,8 +1,18 @@
 import { Diamond } from "lucide-react";
+import { avanceEtapa } from "@/lib/cronogramas/avance";
 import { diasEntre, semanasDe, sumarDias } from "@/lib/cronogramas/fechas";
 import { cn } from "@/lib/utils";
 
-export type EtapaGantt = { id?: string; nombre: string; inicio: string; fin: string; clave: boolean; detalle?: string | null };
+export type EtapaGantt = {
+  id?: string;
+  nombre: string;
+  inicio: string;
+  fin: string;
+  clave: boolean;
+  detalle?: string | null;
+  /** Ítems tildados del detalle. Sin definir = no se muestra avance (p. ej. al editar). */
+  completados?: string[];
+};
 
 const mesFormat = new Intl.DateTimeFormat("es-AR", { month: "short", timeZone: "UTC" });
 const mesAnioFormat = new Intl.DateTimeFormat("es-AR", { month: "short", year: "2-digit", timeZone: "UTC" });
@@ -64,14 +74,18 @@ export function Gantt({ etapas, hoy }: { etapas: EtapaGantt[]; hoy: string }) {
           const left = pos(e.inicio);
           const width = Math.max(((diasEntre(e.inicio, e.fin) + 1) / total) * 100, 0.6);
           const semanas = semanasDe(e.inicio, e.fin);
-          const titulo = hito
-            ? `${e.nombre}: ${fmt(e.inicio)}`
-            : `${e.nombre}: ${fmt(e.inicio)} → ${fmt(e.fin)} (${semanas.toLocaleString("es-AR")} sem.)`;
+          const avance = e.completados ? avanceEtapa(e.detalle, e.completados) : null;
+          const titulo =
+            (hito
+              ? `${e.nombre}: ${fmt(e.inicio)}`
+              : `${e.nombre}: ${fmt(e.inicio)} → ${fmt(e.fin)} (${semanas.toLocaleString("es-AR")} sem.)`) +
+            (avance !== null ? ` · ${avance} % hecho` : "");
           return (
             <div key={e.id ?? i} className="grid grid-cols-[minmax(12rem,16rem)_1fr] border-b last:border-0">
               <div className="flex items-center gap-1.5 py-2 pr-3 text-sm">
                 <span className="line-clamp-2">{e.nombre}</span>
                 {e.clave && <Diamond className="size-3 shrink-0 fill-current text-amber-500" aria-label="Fecha clave" />}
+                {avance !== null && <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">{avance} %</span>}
               </div>
               <div className="relative">
                 {listaMeses.map((m) => (
@@ -91,12 +105,22 @@ export function Gantt({ etapas, hoy }: { etapas: EtapaGantt[]; hoy: string }) {
                 ) : (
                   <div
                     className={cn(
-                      "absolute top-1/2 h-5 -translate-y-1/2 rounded-sm",
-                      e.clave ? "bg-amber-500/80" : "bg-primary/80"
+                      "absolute top-1/2 h-5 -translate-y-1/2 overflow-hidden rounded-sm",
+                      avance === null
+                        ? e.clave
+                          ? "bg-amber-500/80"
+                          : "bg-primary/80"
+                        : e.clave
+                          ? "bg-amber-500/30"
+                          : "bg-primary/20"
                     )}
                     style={{ left: `${left}%`, width: `${width}%` }}
                     title={titulo}
-                  />
+                  >
+                    {avance !== null && (
+                      <div className={cn("h-full", e.clave ? "bg-amber-500/90" : "bg-primary/80")} style={{ width: `${avance}%` }} />
+                    )}
+                  </div>
                 )}
               </div>
             </div>

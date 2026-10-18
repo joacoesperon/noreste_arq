@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, ChevronsUpDown, Plus, Trash2 } from "lucide-react";
 import type { Cliente, StaffOption } from "@/lib/obras/queries";
-import { ESPECIALIDADES, ESTADOS, ROLES_COLABORADOR, SERVICIOS, TIPOLOGIAS } from "@/lib/obras/constants";
+import { ESPECIALIDADES, ESTADOS, ROLES_COLABORADOR, SERVICIOS, TIPOLOGIAS, proyectoDeTerceros } from "@/lib/obras/constants";
 import type { ClienteDatosInput } from "@/lib/obras/schemas";
 import { formatM2 } from "@/lib/obras/superficies";
 import { parseNumero } from "@/lib/documentos/formato";
@@ -517,13 +517,15 @@ export function PasoServicios({ obra, onGuardar, footer }: PasoProps) {
   const toggle = (s: string, checked: boolean) =>
     setServicios((prev) => (checked ? [...prev, s] : prev.filter((x) => x !== s)));
 
+  const terceros = proyectoDeTerceros(servicios);
+
   const guardar = (destino: Destino) =>
     onGuardar(
       {
         // Mantener el orden de la lista
         servicios: opciones.filter((s) => servicios.includes(s)),
-        proyecto_inicio: proyectoInicio || null,
-        proyecto_duracion_meses: aNumero(proyectoMeses),
+        proyecto_inicio: terceros ? null : proyectoInicio || null,
+        proyecto_duracion_meses: terceros ? null : aNumero(proyectoMeses),
         obra_inicio: obraInicio || null,
         obra_duracion_meses: aNumero(obraMeses),
       },
@@ -551,12 +553,21 @@ export function PasoServicios({ obra, onGuardar, footer }: PasoProps) {
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Campo id="proyecto-inicio" label="Inicio del proyecto">
-          <Input id="proyecto-inicio" type="date" value={proyectoInicio} onChange={(e) => setProyectoInicio(e.target.value)} />
-        </Campo>
-        <Campo id="proyecto-meses" label="Duración del proyecto (meses)">
-          <Input id="proyecto-meses" inputMode="decimal" value={proyectoMeses} onChange={(e) => setProyectoMeses(e.target.value)} />
-        </Campo>
+        {terceros ? (
+          <p className="text-sm text-muted-foreground sm:col-span-2">
+            El proyecto no lo hizo el estudio (no está tildado Anteproyecto ni Proyecto ejecutivo): la obra no lleva
+            fechas ni cronograma de proyecto.
+          </p>
+        ) : (
+          <>
+            <Campo id="proyecto-inicio" label="Inicio del proyecto">
+              <Input id="proyecto-inicio" type="date" value={proyectoInicio} onChange={(e) => setProyectoInicio(e.target.value)} />
+            </Campo>
+            <Campo id="proyecto-meses" label="Duración del proyecto (meses)">
+              <Input id="proyecto-meses" inputMode="decimal" value={proyectoMeses} onChange={(e) => setProyectoMeses(e.target.value)} />
+            </Campo>
+          </>
+        )}
         <Campo id="obra-inicio" label="Inicio de obra">
           <Input id="obra-inicio" type="date" value={obraInicio} onChange={(e) => setObraInicio(e.target.value)} />
         </Campo>

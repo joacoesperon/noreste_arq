@@ -10,6 +10,7 @@ import {
   ChevronsUpDown,
   FileText,
   Globe,
+  Inbox,
   KeyRound,
   LayoutDashboard,
   LayoutTemplate,
@@ -60,7 +61,10 @@ const estudio = (paraRevisar: number): NavItem[] => [
   { title: "Plantillas", href: "/admin/plantillas", icon: LayoutTemplate },
 ];
 
-const web: NavItem[] = [{ title: "Sitio web", href: "/admin/sitio-web", icon: Globe }];
+const web = (consultasNuevas: number): NavItem[] => [
+  { title: "Sitio web", href: "/admin/sitio-web", icon: Globe },
+  { title: "Consultas", href: "/admin/consultas", icon: Inbox, badge: consultasNuevas },
+];
 
 function initials(nombre: string) {
   return nombre
@@ -92,7 +96,7 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
                       </Link>
                     </SidebarMenuButton>
                     {!!item.badge && (
-                      <SidebarMenuBadge title={`${item.badge} para revisar`}>
+                      <SidebarMenuBadge title={item.href === "/admin" ? `${item.badge} para revisar` : `${item.badge} nuevas`}>
                         <Badge className="h-5 min-w-5 px-1.5">{item.badge}</Badge>
                       </SidebarMenuBadge>
                     )}
@@ -119,7 +123,15 @@ function NavGroup({ label, items }: { label: string; items: NavItem[] }) {
   );
 }
 
-export function AppSidebar({ staff, paraRevisar }: { staff: StaffUser; paraRevisar: number }) {
+export function AppSidebar({
+  staff,
+  paraRevisar,
+  consultasNuevas,
+}: {
+  staff: StaffUser;
+  paraRevisar: number;
+  consultasNuevas: number;
+}) {
   const [passwordOpen, setPasswordOpen] = useState(false);
 
   return (
@@ -142,7 +154,7 @@ export function AppSidebar({ staff, paraRevisar }: { staff: StaffUser; paraRevis
 
       <SidebarContent>
         <NavGroup label="Estudio" items={estudio(paraRevisar)} />
-        <NavGroup label="Web" items={web} />
+        <NavGroup label="Web" items={web(consultasNuevas)} />
       </SidebarContent>
 
       <SidebarFooter>

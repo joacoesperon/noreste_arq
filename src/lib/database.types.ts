@@ -101,9 +101,49 @@ export type Database = {
         }
         Relationships: []
       }
+      consultas_web: {
+        Row: {
+          atendida: boolean
+          created_at: string
+          etapa: string | null
+          id: string
+          nombre: string | null
+          plazo: string | null
+          presupuesto: string | null
+          servicio: string | null
+          tipo: string
+          ubicacion: string | null
+        }
+        Insert: {
+          atendida?: boolean
+          created_at?: string
+          etapa?: string | null
+          id?: string
+          nombre?: string | null
+          plazo?: string | null
+          presupuesto?: string | null
+          servicio?: string | null
+          tipo: string
+          ubicacion?: string | null
+        }
+        Update: {
+          atendida?: boolean
+          created_at?: string
+          etapa?: string | null
+          id?: string
+          nombre?: string | null
+          plazo?: string | null
+          presupuesto?: string | null
+          servicio?: string | null
+          tipo?: string
+          ubicacion?: string | null
+        }
+        Relationships: []
+      }
       cronograma_etapas: {
         Row: {
           clave: boolean
+          completados: string[]
           cronograma_id: string
           detalle: string | null
           fin: string
@@ -114,6 +154,7 @@ export type Database = {
         }
         Insert: {
           clave?: boolean
+          completados?: string[]
           cronograma_id: string
           detalle?: string | null
           fin: string
@@ -124,6 +165,7 @@ export type Database = {
         }
         Update: {
           clave?: boolean
+          completados?: string[]
           cronograma_id?: string
           detalle?: string | null
           fin?: string
@@ -701,6 +743,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "obra_gremios_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      obra_links: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          obra_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          obra_id: string
+          token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          obra_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "obra_links_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "staff"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "obra_links_obra_id_fkey"
             columns: ["obra_id"]
             isOneToOne: false
             referencedRelation: "obras"
@@ -1500,6 +1584,10 @@ export type Database = {
       }
       is_staff: { Args: never; Returns: boolean }
       puede_editar: { Args: never; Returns: boolean }
+      marcar_item_etapa: {
+        Args: { p_etapa_id: string; p_hecho: boolean; p_item: string }
+        Returns: undefined
+      }
       reemplazar_listas_obra: {
         Args: {
           p_colaboradores?: Json

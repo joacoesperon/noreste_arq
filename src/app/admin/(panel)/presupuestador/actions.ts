@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getStaff } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { geocodificar } from "@/lib/presupuestador/geocodificar";
+import { leerListaIA, type ItemIA } from "@/lib/presupuestador/ia";
 import { normalizar } from "@/lib/presupuestador/texto";
 import { buscarVtex, dominioValido, precioVtex, type ProductoWeb } from "@/lib/presupuestador/vtex";
 import { hoyAR } from "@/lib/tareas/semanas";
@@ -190,12 +191,19 @@ export async function importarLista(payload: unknown): Promise<Resultado & { imp
   const { proveedor_id, fecha, moneda, archivo, filas } = parsed.data;
   const supabase = await createClient();
 
-  // Crear los materiales nuevos pedidos
+  // Crear los materiales nuevos pedidos (uno solo si varias filas piden el mismo nombre y unidad)
   const asociadas: { texto: string; precio: number; material_id: string }[] = [];
+  const creados = new Map<string, string>();
   for (const f of filas) {
     if (f.material_id) {
       asociadas.push({ texto: f.texto, precio: f.precio, material_id: f.material_id });
     } else if (f.nuevo) {
+      const clave = `${normalizar(f.nuevo.nombre)}|${f.nuevo.unidad}`;
+      const existente = creados.get(clave);
+      if (existente) {
+        asociadas.push({ texto: f.texto, precio: f.precio, material_id: existente });
+        continue;
+      }
       const { data, error } = await supabase
         .from("materiales")
         .insert({ ...f.nuevo, tipo: "material", activo: true })
@@ -207,6 +215,7 @@ export async function importarLista(payload: unknown): Promise<Resultado & { imp
           error: error.code === "23505" ? `Ya existe un material con el código «${f.nuevo.codigo}».` : "No se pudo crear un material.",
         };
       }
+      creados.set(clave, data.id);
       asociadas.push({ texto: f.texto, precio: f.precio, material_id: data.id });
     }
   }
@@ -265,6 +274,33 @@ export async function equivalenciasProveedor(proveedorId: string) {
   const supabase = await createClient();
   const { data } = await supabase.from("material_equivalencias").select("texto, material_id").eq("proveedor_id", proveedorId);
   return data ?? [];
+}
+
+const tablaSchema = z.array(z.array(z.string().max(2000)).max(50)).min(1).max(3000);
+
+/** Lee una lista de precios con IA: separa productos y presentaciones y propone el material del catálogo. */
+export async function leerListaConIA(filas: unknown): Promise<{ ok: true; items: ItemIA[] } | { ok: false; error: string }> {
+  const staff = await getStaff();
+  if (!staff) return SIN_SESION;
+  if (staff.rol === "lectura") return { ok: false, error: "Usuario de solo lectura: no puede leer listas con IA." };
+  if (!process.env.ANTHROPIC_API_KEY) return { ok: false, error: "Falta configurar la clave de la IA (ANTHROPIC_API_KEY)." };
+  const parsed = tablaSchema.safeParse(filas);
+  if (!parsed.success) return { ok: false, error: "La lista es demasiado grande o no se pudo leer." };
+
+  const supabase = await createClient();
+  const { data: catalogo, error } = await supabase
+    .from("materiales")
+    .select("id, nombre, unidad, codigo, rubro")
+    .eq("activo", true)
+    .order("nombre");
+  if (error) return { ok: false, error: "No se pudo leer el catálogo." };
+
+  try {
+    return { ok: true, items: await leerListaIA(parsed.data, catalogo) };
+  } catch (e) {
+    console.error("leerListaConIA", e);
+    return { ok: false, error: e instanceof Error && !("status" in e) ? e.message : "La IA no respondió. Probá de nuevo en un rato." };
+  }
 }
 
 // Presupuestos -----------------------------------------------------------------------
@@ -394,15 +430,21 @@ export async function vincularProductoWeb(payload: unknown): Promise<Resultado> 
   if (!dominioValido(tienda?.web_dominio)) return { ok: false, error: "El proveedor no tiene tienda online configurada." };
 
   // El precio se vuelve a leer en el servidor: no se confía en el que muestra el navegador.
-  const producto = await precioVtex(tienda.web_dominio, producto_id).catch(() => null);
-  if (!producto) return { ok: false, error: "No se pudo leer el producto en la tienda." };
+  let producto: ProductoWeb | null;
+  try {
+    producto = await precioVtex(tienda.web_dominio, producto_id);
+  } catch (e) {
+    console.error("vincularProductoWeb:", e);
+    return { ok: false, error: `No se pudo leer el producto en la tienda (${e instanceof Error ? e.message : "error"}).` };
+  }
+  if (!producto) return { ok: false, error: "La tienda no devolvió precio para ese producto (puede estar sin stock o dado de baja)." };
 
   const { error } = await supabase.from("material_productos_web").upsert(
     { material_id, proveedor_id, producto_id, nombre: producto.nombre, url: producto.url, ultima_lectura: new Date().toISOString(), ultimo_error: null },
     { onConflict: "material_id,proveedor_id" }
   );
   if (error) return { ok: false, error: "No se pudo guardar el vínculo." };
-  await supabase.from("precios").insert({
+  const { error: errorPrecio } = await supabase.from("precios").insert({
     material_id,
     proveedor_id,
     precio: producto.precio,
@@ -413,6 +455,7 @@ export async function vincularProductoWeb(payload: unknown): Promise<Resultado> 
     descripcion_proveedor: producto.nombre,
     created_by: staff.id,
   });
+  if (errorPrecio) return { ok: false, error: "Se vinculó el producto, pero no se pudo guardar el precio." };
   revalidar();
   revalidatePath("/admin/obras", "layout");
   return { ok: true };

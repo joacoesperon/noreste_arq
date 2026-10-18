@@ -1,4 +1,5 @@
 import { getStaff } from "@/lib/auth";
+import { contarConsultasNuevas } from "@/lib/consultas/queries";
 import { contarParaRevisar } from "@/lib/tareas/queries";
 import { AppSidebar } from "@/components/admin/app-sidebar";
 import { NoAccess } from "@/components/admin/no-access";
@@ -10,11 +11,14 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   // El proxy ya exige sesión; acá se verifica que la cuenta sea del estudio.
   const staff = await getStaff();
   if (!staff) return <NoAccess />;
-  const paraRevisar = await contarParaRevisar(staff.id).catch(() => 0);
+  const [paraRevisar, consultasNuevas] = await Promise.all([
+    contarParaRevisar(staff.id).catch(() => 0),
+    contarConsultasNuevas().catch(() => 0),
+  ]);
 
   return (
     <SidebarProvider>
-      <AppSidebar staff={staff} paraRevisar={paraRevisar} />
+      <AppSidebar staff={staff} paraRevisar={paraRevisar} consultasNuevas={consultasNuevas} />
       <SidebarInset>
         <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4 md:hidden">
           <SidebarTrigger className="-ml-1" />

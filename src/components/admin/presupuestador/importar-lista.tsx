@@ -3,9 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Check, FileUp, Link2, Loader2, Plus, X } from "lucide-react";
+import { ArrowLeft, Check, FileUp, Link2, Loader2, Plus, Sparkles, X } from "lucide-react";
 import { toast } from "sonner";
-import { equivalenciasProveedor, importarLista } from "@/app/admin/(panel)/presupuestador/actions";
+import { equivalenciasProveedor, importarLista, leerListaConIA } from "@/app/admin/(panel)/presupuestador/actions";
 import { formatMonto, parseNumero, type Moneda } from "@/lib/documentos/formato";
 import { RUBROS } from "@/lib/presupuestador/constants";
 import { leerTabla } from "@/lib/presupuestador/leer-tabla";
@@ -32,7 +32,12 @@ type Fila = {
   precio: number | null;
   material_id: string | null;
   /** Cómo se asoció sola (para mostrarlo) */
-  auto: "equivalencia" | "codigo" | "nombre" | null;
+  auto: "equivalencia" | "codigo" | "nombre" | "ia" | null;
+  /** Lectura con IA: qué tan segura está de la asociación */
+  confianza?: "alta" | "media" | "baja";
+  /** Lectura con IA: nombre prolijo y rubro para crear el material si no está en el catálogo */
+  nuevoNombre?: string;
+  rubro?: string;
   estado: Estado;
 };
 
@@ -59,6 +64,7 @@ export function ImportarLista({ proveedores, materiales }: { proveedores: Provee
   const [rubroNuevos, setRubroNuevos] = useState<string>(RUBROS[0]);
   const [asociando, setAsociando] = useState<number | null>(null);
   const [leyendo, setLeyendo] = useState(false);
+  const [leyendoIA, setLeyendoIA] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const porId = useMemo(() => new Map(materiales.map((m) => [m.id, m])), [materiales]);
@@ -116,6 +122,40 @@ export function ImportarLista({ proveedores, materiales }: { proveedores: Provee
       setFilas(nuevas);
     });
 
+  /** Lee la lista con IA: separa productos y presentaciones y propone el material del catálogo. */
+  const leerConIA = async () => {
+    if (!tabla || !proveedor) return;
+    setLeyendoIA(true);
+    setFilas(null);
+    try {
+      const [res, eqs] = await Promise.all([leerListaConIA(tabla), equivalenciasProveedor(proveedor)]);
+      if (!res.ok) return void toast.error(res.error);
+      if (res.items.length === 0) return void toast.error("La IA no encontró productos con precio en esta lista.");
+      const equivalencias = new Map(eqs.map((e) => [e.texto, e.material_id]));
+      setFilas(
+        res.items.map((it) => {
+          // Lo que el estudio ya asoció antes manda sobre la sugerencia de la IA.
+          const conocido = equivalencias.get(normalizar(it.texto));
+          const material_id = conocido ?? it.material_id;
+          return {
+            texto: it.texto,
+            codigo: "",
+            unidad: it.unidad,
+            precio: sumarIva ? Math.round(it.precio * 1.21 * 100) / 100 : it.precio,
+            material_id,
+            auto: conocido ? "equivalencia" : material_id ? "ia" : null,
+            confianza: conocido ? undefined : it.confianza,
+            nuevoNombre: it.nombre_catalogo,
+            rubro: it.rubro,
+            estado: material_id ? "asociada" : "nueva",
+          };
+        })
+      );
+    } finally {
+      setLeyendoIA(false);
+    }
+  };
+
   const set = (i: number, cambios: Partial<Fila>) =>
     setFilas((fs) => (fs ? fs.map((f, j) => (j === i ? { ...f, ...cambios } : f)) : fs));
 
@@ -135,7 +175,7 @@ export function ImportarLista({ proveedores, materiales }: { proveedores: Provee
             material_id: f.estado === "asociada" ? f.material_id : null,
             nuevo:
               f.estado === "nueva"
-                ? { nombre: f.texto, unidad: f.unidad || "u", rubro: rubroNuevos, codigo: f.codigo || null }
+                ? { nombre: f.nuevoNombre || f.texto, unidad: f.unidad || "u", rubro: f.rubro ?? rubroNuevos, codigo: f.codigo || null }
                 : null,
           })),
       });
@@ -159,7 +199,7 @@ export function ImportarLista({ proveedores, materiales }: { proveedores: Provee
       <Card>
         <CardHeader>
           <CardTitle>1. La lista</CardTitle>
-          <CardDescription>Excel (.xlsx), CSV o PDF con columnas (código, descripción, precio). Si el PDF no se lee bien, pedile el Excel al proveedor.</CardDescription>
+          <CardDescription>Excel (.xlsx), CSV o PDF, en el formato que la mande el proveedor.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-2 sm:col-span-2">
@@ -219,21 +259,38 @@ export function ImportarLista({ proveedores, materiales }: { proveedores: Provee
       {tabla && (
         <Card>
           <CardHeader>
-            <CardTitle>2. Columnas</CardTitle>
-            <CardDescription>Indicá qué columna tiene cada dato. Las filas sin precio (títulos, separadores) se saltean.</CardDescription>
+            <CardTitle>2. Leer la lista</CardTitle>
+            <CardDescription>
+              La IA entiende listas desprolijas (varios precios en una celda, títulos de sección), separa cada presentación y
+              propone con qué material del catálogo se corresponde, aunque el proveedor lo nombre distinto. Después lo revisás.
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <MapeoColumnas filas={tabla} roles={ROLES} mapeo={mapeo} onMapeo={(m) => { setMapeo(m); setFilas(null); }} encabezado={encabezado} onEncabezado={(v) => { setEncabezado(v); setFilas(null); }} />
             <div className="flex items-center gap-2">
               <Checkbox id="sumar-iva" checked={sumarIva} onCheckedChange={(v) => { setSumarIva(v === true); setFilas(null); }} />
               <Label htmlFor="sumar-iva" className="font-normal">
                 Los precios no incluyen IVA: sumarlo (usa la columna de IVA, o 21% si no hay)
               </Label>
             </div>
-            <Button className="self-start" onClick={asociar} disabled={!listoParaAsociar || pending}>
-              {pending && !filas ? <Loader2 className="animate-spin" /> : <Link2 />}
-              Asociar con el catálogo
-            </Button>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button onClick={leerConIA} disabled={!proveedor || leyendoIA || pending}>
+                {leyendoIA ? <Loader2 className="animate-spin" /> : <Sparkles />}
+                {leyendoIA ? "Leyendo… (puede tardar un minuto)" : "Leer con IA"}
+              </Button>
+              {!proveedor && <span className="text-sm text-muted-foreground">Elegí el proveedor primero.</span>}
+            </div>
+            <details className="rounded-md border px-3 py-2">
+              <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                O indicá las columnas a mano (para planillas ordenadas)
+              </summary>
+              <div className="mt-4 flex flex-col gap-4">
+                <MapeoColumnas filas={tabla} roles={ROLES} mapeo={mapeo} onMapeo={(m) => { setMapeo(m); setFilas(null); }} encabezado={encabezado} onEncabezado={(v) => { setEncabezado(v); setFilas(null); }} />
+                <Button variant="outline" className="self-start" onClick={asociar} disabled={!listoParaAsociar || pending || leyendoIA}>
+                  {pending && !filas ? <Loader2 className="animate-spin" /> : <Link2 />}
+                  Asociar con el catálogo
+                </Button>
+              </div>
+            </details>
           </CardContent>
         </Card>
       )}
@@ -288,10 +345,24 @@ export function ImportarLista({ proveedores, materiales }: { proveedores: Provee
                         <Badge variant="secondary" className="max-w-64 truncate" title={m.nombre}>
                           <Check />
                           {m.nombre}
-                          {f.auto && <span className="font-normal text-muted-foreground"> · {f.auto === "equivalencia" ? "ya conocida" : `por ${f.auto}`}</span>}
+                          {f.auto && (
+                            <span className="font-normal text-muted-foreground">
+                              {" "}
+                              · {f.auto === "equivalencia" ? "ya conocida" : f.auto === "ia" ? "sugerida por IA" : `por ${f.auto}`}
+                            </span>
+                          )}
                         </Badge>
                       )}
-                      {f.estado === "nueva" && <Badge variant="outline">material nuevo</Badge>}
+                      {f.estado === "asociada" && f.auto === "ia" && f.confianza !== "alta" && (
+                        <Badge variant="outline" className="border-amber-500/60 text-amber-700 dark:text-amber-400">
+                          revisar
+                        </Badge>
+                      )}
+                      {f.estado === "nueva" && (
+                        <Badge variant="outline" className="max-w-64 truncate" title={f.nuevoNombre}>
+                          material nuevo{f.nuevoNombre && f.nuevoNombre !== f.texto ? `: ${f.nuevoNombre}` : ""}
+                        </Badge>
+                      )}
                       <Button variant="ghost" size="xs" onClick={() => setAsociando(i)}>
                         Asociar…
                       </Button>
