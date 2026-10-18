@@ -1,6 +1,6 @@
 """
 Aplica las migraciones de supabase/migrations/ a un proyecto de Supabase usando la
-API de administración (no necesita la contraseña de la base, solo `npx supabase login`).
+API de administración (no necesita la contraseña de la base, solo un token de acceso).
 
 Uso:  python3 scripts/aplicar-migraciones.py <project-ref> [--base-aplicada]
 
@@ -21,7 +21,14 @@ if len(sys.argv) < 2:
     sys.exit(__doc__)
 REF = sys.argv[1]
 BASE_APLICADA = "--base-aplicada" in sys.argv
-TOKEN = open(os.path.expanduser("~/.supabase/access-token")).read().strip()
+# Token de acceso: variable SUPABASE_ACCESS_TOKEN o ~/.supabase/access-token
+# (se crea en supabase.com/dashboard/account/tokens).
+TOKEN = os.environ.get("SUPABASE_ACCESS_TOKEN", "").strip()
+if not TOKEN:
+    try:
+        TOKEN = open(os.path.expanduser("~/.supabase/access-token")).read().strip()
+    except FileNotFoundError:
+        sys.exit("Falta el token de Supabase: SUPABASE_ACCESS_TOKEN o ~/.supabase/access-token.")
 RAIZ = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 
 
