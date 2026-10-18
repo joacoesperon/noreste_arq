@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.18"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -1583,11 +1583,11 @@ export type Database = {
         Returns: undefined
       }
       is_staff: { Args: never; Returns: boolean }
-      puede_editar: { Args: never; Returns: boolean }
       marcar_item_etapa: {
         Args: { p_etapa_id: string; p_hecho: boolean; p_item: string }
         Returns: undefined
       }
+      puede_editar: { Args: never; Returns: boolean }
       reemplazar_listas_obra: {
         Args: {
           p_colaboradores?: Json
