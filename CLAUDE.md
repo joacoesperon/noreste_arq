@@ -9,6 +9,7 @@ Requisitos del panel: `docs/alcance-panel-estudio.pdf` y `docs/Noreste_Modificac
 - `src/app/admin/` — panel del estudio. Root layout propio con `admin.css`. **UI con shadcn/ui** (`npx shadcn@latest add <componente>`; `components.json` apunta a `admin.css`). Componentes del panel en `src/components/admin/`, primitivas en `src/components/ui/`.
   - `admin/login` — login (server action en `admin/actions.ts`).
   - `admin/(panel)/` — secciones con menú lateral (`components/admin/app-sidebar.tsx`).
+- Métricas del sitio público: script de Posidonia (`posidoniamedia.com/m.js`, `data-sitio="noreste"`) en `src/app/(site)/layout.tsx`. Mide visitas y clics en WhatsApp, correo e Instagram, sin cookies; el panel y el visor no lo cargan. Si se agrega CSP, permitir `https://posidoniamedia.com` en `script-src` y `connect-src`.
 - Los dos root layouts no comparten CSS: los estilos globales del sitio (tamaños en `p/span/button`, tokens `--color-*`) romperían shadcn.
 
 ## Auth y datos

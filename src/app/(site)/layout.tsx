@@ -34,6 +34,8 @@ export default function RootLayout({
     <html lang="es" className="light" style={{ colorScheme: 'light' }}>
       <head>
         <link rel="stylesheet" href="https://use.typekit.net/eml1xpb.css" />
+        {/* Métricas (visitas y contactos, sin cookies) para el informe mensual de Posidonia. Solo en el sitio público. */}
+        <script defer src="https://posidoniamedia.com/m.js" data-sitio="noreste" />
       </head>
       <body className={`${inter.variable} ${lexend.variable} font-sans`}>
         {children}
