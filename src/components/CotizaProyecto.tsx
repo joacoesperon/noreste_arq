@@ -66,6 +66,7 @@ export default function CotizaProyecto({ telefono }: { telefono: string }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        data-metrica={open ? undefined : "cotizador"}
         aria-expanded={open}
         aria-controls="cotiza-panel"
         className="
@@ -130,6 +131,7 @@ export default function CotizaProyecto({ telefono }: { telefono: string }) {
                   </div>
                 ) : (
                   <form
+                    data-metrica-no
                     className="flex flex-col gap-3"
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -181,6 +183,7 @@ export default function CotizaProyecto({ telefono }: { telefono: string }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={enviar}
+                  data-metrica="cotizacion"
                   className="bg-[#1a1a1a] px-4 py-2.5 text-center text-white hover:opacity-90"
                 >
                   Enviar por WhatsApp
